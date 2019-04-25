@@ -1,0 +1,498 @@
+
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  DatabaseHostName:
+    Description: The hostname name of the cluster endpoint.
+    Type: String
+    Default: <cluster>.<region>.redshift.amazonaws.com
+  DatabaseName:
+    Description: The name of the database to use to load the data.
+    Type: String
+    Default: dev
+    AllowedPattern: "([a-z]|[0-9])+"
+  MasterUsername:
+    Description: The user name to use to load the data.  User must have create/drop/insert privileges.
+    Type: String
+    Default: awsuser
+    AllowedPattern: "([a-z])([a-z]|[0-9])*"
+  MasterUserPassword:
+    Description: The password to use to load the data.
+    Type: String
+    Default: Awsuser123
+    NoEcho: 'true'
+  PortNumber:
+    Description: The port number on which the cluster accepts incoming connections.
+    Type: Number
+    Default: '5439'
+  VPC:
+    Description: The VPC of the Redshift cluster.
+    Type: AWS::EC2::VPC::Id
+  Subnet:
+    Description: Choose one of the subnets associated to your Redshift cluster.
+    Type: AWS::EC2::Subnet::Id
+  SecurityGroup:
+    Description: Choose the security group of the Redshift cluster.
+    Type: AWS::EC2::SecurityGroup::Id
+  Role:
+    Type: String
+    Description: Enter the role associated to the Redshift cluster and which has S3 Read Access.
+    Default: RedshiftImmersionRole
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Redshift Connection Parameters"
+        Parameters:
+          - DatabaseHostName
+          - PortNumber
+          - MasterUsername
+          - MasterUserPassword
+          - DatabaseName
+      -
+        Label:
+          default: "Redshift VPC/Security Parameters"
+        Parameters:
+          - VPC
+          - Subnet
+          - SecurityGroup
+          - Role
+Resources:
+  LambdaLoadRedshiftRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+      Path: /
+      Policies:
+          -
+            PolicyName: LambdaLoadRedshiftPolicy
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                -
+                  Effect: Allow
+                  Action:
+                    - s3:*
+                  Resource:
+                    - !Sub "arn:aws:s3:::cloudformation-custom-resource-response-${AWS::Region}"
+                    - !Sub "arn:aws:s3:::cloudformation-waitcondition-${AWS::Region}"
+                    - !Sub "arn:aws:s3:::cloudformation-custom-resource-response-${AWS::Region}/*"
+                    - !Sub "arn:aws:s3:::cloudformation-waitcondition-${AWS::Region}/*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+  LambdaLoadRedshiftCommand:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaLoadRedshiftRole
+      - PrivateSubnet1
+      - PrivateSubnet2
+      - LambdaLoadRedshiftRole
+      - PrivateSubnetRouteTableAssociation1
+      - PrivateSubnetRouteTableAssociation2
+      - NatGateway
+      - PrivateRoute
+      - LambdaLoadRedshiftRole
+    Properties:
+        Code:
+          S3Bucket: redshift-awslabs
+          S3Key: RedshiftCommand.zip
+        Description: Command handler to send SQL to Redshift
+        FunctionName: RedshiftCommand
+        Handler: RedshiftCommand.command_handler
+        VpcConfig:
+          SecurityGroupIds :
+            - Ref: SecurityGroup
+          SubnetIds :
+            - Ref: PrivateSubnet1
+            - Ref: PrivateSubnet2
+        MemorySize: 128
+        Role:
+          Fn::GetAtt: [LambdaLoadRedshiftRole,Arn]
+        Runtime: python2.7
+        Timeout: 300
+  CloudwatchVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId:
+        Ref: VPC
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.cloudformation'
+      PrivateDnsEnabled: false
+      VpcEndpointType: Interface
+      SubnetIds:
+        - Ref: PrivateSubnet1
+        - Ref: PrivateSubnet2
+      SecurityGroupIds:
+        - Ref: SecurityGroup
+  DDL:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: |-
+        DROP TABLE IF EXISTS partsupp;
+        DROP TABLE IF EXISTS lineitem;
+        DROP TABLE IF EXISTS supplier;
+        DROP TABLE IF EXISTS part;
+        DROP TABLE IF EXISTS orders;
+        DROP TABLE IF EXISTS customer;
+        DROP TABLE IF EXISTS nation;
+        DROP TABLE IF EXISTS region;
+
+        CREATE TABLE region (
+          R_REGIONKEY bigint NOT NULL PRIMARY KEY,
+          R_NAME varchar(25),
+          R_COMMENT varchar(152))
+        diststyle all;
+
+        CREATE TABLE nation (
+          N_NATIONKEY bigint NOT NULL PRIMARY KEY,
+          N_NAME varchar(25),
+          N_REGIONKEY bigint REFERENCES region(R_REGIONKEY),
+          N_COMMENT varchar(152))
+        diststyle all;
+
+        CREATE TABLE customer (
+          C_CUSTKEY bigint encode zstd NOT NULL PRIMARY KEY,
+          C_NAME varchar(25) encode zstd,
+          C_ADDRESS varchar(40) encode zstd,
+          C_NATIONKEY bigint encode zstd REFERENCES nation(N_NATIONKEY),
+          C_PHONE varchar(15) encode zstd,
+          C_ACCTBAL decimal(18,4) encode zstd,
+          C_MKTSEGMENT varchar(10),
+          C_COMMENT varchar(117) encode zstd)
+        diststyle all;
+
+        create table orders (
+          O_ORDERKEY bigint encode zstd NOT NULL PRIMARY KEY,
+          O_CUSTKEY bigint encode zstd REFERENCES customer(C_CUSTKEY),
+          O_ORDERSTATUS varchar(1) encode zstd,
+          O_TOTALPRICE decimal(18,4) encode zstd,
+          O_ORDERDATE Date encode zstd,
+          O_ORDERPRIORITY varchar(15),
+          O_CLERK varchar(15) encode zstd,
+          O_SHIPPRIORITY Integer encode zstd,
+          O_COMMENT varchar(79) encode zstd)
+        distkey (O_ORDERKEY)
+        sortkey (O_ORDERDATE);
+
+        create table part (
+          P_PARTKEY bigint encode zstd NOT NULL PRIMARY KEY,
+          P_NAME varchar(55),
+          P_MFGR  varchar(25)  encode zstd,
+          P_BRAND varchar(10),
+          P_TYPE varchar(25),
+          P_SIZE integer  encode zstd,
+          P_CONTAINER varchar(10),
+          P_RETAILPRICE decimal(18,4)  encode zstd,
+          P_COMMENT varchar(23)  encode zstd)
+        diststyle all;
+
+        create table supplier (
+          S_SUPPKEY bigint encode zstd NOT NULL PRIMARY KEY,
+          S_NAME varchar(25)  encode zstd,
+          S_ADDRESS varchar(40)  encode zstd,
+          S_NATIONKEY bigint  encode zstd REFERENCES nation(n_nationkey),
+          S_PHONE varchar(15)  encode zstd,
+          S_ACCTBAL decimal(18,4)  encode zstd,
+          S_COMMENT varchar(101)  encode zstd)
+        diststyle all;
+
+
+        create table lineitem (
+          L_ORDERKEY bigint encode zstd NOT NULL REFERENCES orders(O_ORDERKEY),
+          L_PARTKEY bigint encode zstd REFERENCES part(P_PARTKEY),
+          L_SUPPKEY bigint encode zstd REFERENCES supplier(S_SUPPKEY),
+          L_LINENUMBER integer encode zstd NOT NULL,
+          L_QUANTITY decimal(18,4),
+          L_EXTENDEDPRICE decimal(18,4) encode zstd,
+          L_DISCOUNT decimal(18,4) encode zstd,
+          L_TAX decimal(18,4) encode zstd,
+          L_RETURNFLAG varchar(1) encode zstd,
+          L_LINESTATUS varchar(1) encode zstd,
+          L_SHIPDATE date encode zstd,
+          L_COMMITDATE date encode zstd,
+          L_RECEIPTDATE date encode zstd,
+          L_SHIPINSTRUCT varchar(25) encode zstd,
+          L_SHIPMODE varchar(10),
+          L_COMMENT varchar(44) encode zstd,
+        PRIMARY KEY (L_ORDERKEY, L_LINENUMBER))
+        distkey (L_ORDERKEY)
+        sortkey (L_RECEIPTDATE);
+
+        create table partsupp (
+          PS_PARTKEY bigint encode zstd NOT NULL REFERENCES part(P_PARTKEY),
+          PS_SUPPKEY bigint encode zstd NOT NULL REFERENCES supplier(S_SUPPKEY),
+          PS_AVAILQTY integer,
+          PS_SUPPLYCOST decimal(18,4)  encode zstd,
+          PS_COMMENT varchar(199) encode zstd,
+        PRIMARY KEY (PS_PARTKEY, PS_SUPPKEY))
+        diststyle even;
+  DMLRegion:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY region FROM 's3://redshift-awslabs/data/region/region.tbl.lzo' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  DMLNation:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY nation FROM 's3://redshift-awslabs/data/nation/nation.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  DMLCustomer:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY customer FROM 's3://redshift-awslabs/data/customer/customer.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  DMLOrders:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY orders FROM 's3://redshift-awslabs/data/orders/orders.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  DMLPart:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY part FROM 's3://redshift-awslabs/data/part/part.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  DMLSupplier:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY supplier FROM 's3://redshift-awslabs/data/supplier/supplier.json' manifest iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  DMLLineitem:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY lineitem FROM 's3://redshift-awslabs/data/lineitem/lineitem.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  DMLPartSupp:
+    Type: Custom::RedshiftCommand
+    DependsOn:
+      - DDL
+      - LambdaLoadRedshiftCommand
+      - CloudwatchVPCEndpoint
+    Properties:
+      ServiceToken:
+        Fn::GetAtt : [LambdaLoadRedshiftCommand, Arn]
+      UserName:
+        Ref: MasterUsername
+      UserPassword:
+        Ref: MasterUserPassword
+      Database:
+        Ref: DatabaseName
+      HostName:
+        Ref: DatabaseHostName
+      Port:
+        Ref: PortNumber
+      SQLCommand: !Sub
+        - COPY partsupp FROM 's3://redshift-awslabs/data/partsupp/partsupp.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - {Role: !Ref Role}
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      VpcId:
+        Ref: VPC
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      VpcId:
+        Ref: VPC
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain:
+        Ref: VPC
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PrivateSubnet1
+      - PrivateRouteTable
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet1
+      RouteTableId:
+        Ref: PrivateRouteTable
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PrivateSubnet2
+      - PrivateRouteTable
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet2
+      RouteTableId:
+        Ref: PrivateRouteTable
+  SecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      CidrIp: !Join ['/', [!Ref ElasticIP, '32']]
+      Description: EIP of NatGateway
+      FromPort: 5439
+      ToPort: 5439
+      IpProtocol: tcp
+      GroupId:
+        Ref: SecurityGroup
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn:
+      - ElasticIP
+    Properties:
+      AllocationId: !GetAtt [ElasticIP, AllocationId]
+      SubnetId:
+        Ref: Subnet
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NatGateway
