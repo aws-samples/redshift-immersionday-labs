@@ -134,35 +134,35 @@ diststyle even;
 A COPY command loads large amounts of data much more efficiently than using INSERT statements, and stores the data more effectively as well.  Use a single COPY command to load data for one table from multiple files.  Amazon Redshift then automatically loads the data in parallel.  For your convenience, the sample data you will use is available in a public Amazon S3 bucket. To ensure that  Redshift performs a compression analysis, set the COMPUPDATE parameter to ON in your COPY commands. To copy this data you will need to replace the [Your-AWS_Account_Id] and [Your-Redshift_Role] values in the script below.
 
 ```
-COPY region FROM 's3://redshift-awslabs/data/region/region.tbl.lzo'
+COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 
-COPY nation FROM 's3://redshift-awslabs/data/nation/nation.tbl.'
+COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 
-copy customer from 's3://redshift-awslabs/data/customer/customer.tbl.'
+copy customer from 's3://redshift-immersionday-labs/data/customer/customer.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 
-copy orders from 's3://redshift-awslabs/data/orders/orders.tbl.'
+copy orders from 's3://redshift-immersionday-labs/data/orders/orders.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 
-copy part from 's3://redshift-awslabs/data/part/part.tbl.'
+copy part from 's3://redshift-immersionday-labs/data/part/part.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 
-copy supplier from 's3://redshift-awslabs/data/supplier/supplier.json' manifest
+copy supplier from 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 
-copy lineitem from 's3://redshift-awslabs/data/lineitem/lineitem.tbl.'
+copy lineitem from 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 
-copy partsupp from 's3://redshift-awslabs/data/partsupp/partsupp.tbl.'
+copy partsupp from 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
 ```
