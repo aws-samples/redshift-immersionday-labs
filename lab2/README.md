@@ -23,7 +23,7 @@ This lab assumes you have launched a Redshift cluster and can gather the followi
 
 ## Cloud Formation
 To complete the loading of this sample data automatically using cloud formation, use the following link.
-[![Launch](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=ImmersionLab2&templateURL=https://s3-us-west-2.amazonaws.com/redshift-awslabs/lab2.yaml)
+[![Launch](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=ImmersionLab2&templateURL=https://s3-us-west-2.amazonaws.com/redshift-immersionday-labs/lab2.yaml)
 
 Note: This cloud formation template will create a Lambda function which will trigger each of the data loads.  In order to trigger these loads securely, the Lambda function will be deployed to the same VPC as the Redshift cluster in a new set of Private Subnets with a NAT Gateway allowing the function to communicate to the Redshift Cluster.  In order to create this stack, you will need to gather the following information in addition to the items above.
 * [Your-Redshift-VPC]
