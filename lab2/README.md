@@ -177,7 +177,7 @@ If you are using 4 dc2.large clusters nodes, the estimated time to load the data
 *	PARTSUPPLIER - (80M rows) 45s
 
 ## Table Maintenance - Analyze
-You should at regular intervals, update the statistical metadata that the query planner uses to build and choose optimal plans.  You can analyze a table explicitly by running the ANALYZE command.  When you load data with the COPY command, you can perform an analysis automatically by setting the STARTUPDATE option to ON.  By default, the COPY command performs an analysis after it loads data into an empty table.
+You should at regular intervals, update the statistical metadata that the query planner uses to build and choose optimal plans.  You can analyze a table explicitly by running the ANALYZE command.  When you load data with the COPY command, you can perform an analysis automatically by setting the STATUPDATE option to ON.  By default, the COPY command performs an analysis after it loads data into an empty table.
 
 Run the ANALYZE command against the CUSTOMER table.
 ```
