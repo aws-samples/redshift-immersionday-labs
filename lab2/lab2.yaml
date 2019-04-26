@@ -270,7 +270,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY region FROM 's3://redshift-awslabs/data/region/region.tbl.lzo' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   DMLNation:
     Type: Custom::RedshiftCommand
@@ -292,7 +292,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY nation FROM 's3://redshift-awslabs/data/nation/nation.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   DMLCustomer:
     Type: Custom::RedshiftCommand
@@ -314,7 +314,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY customer FROM 's3://redshift-awslabs/data/customer/customer.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY customer FROM 's3://redshift-immersionday-labs/data/customer/customer.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   DMLOrders:
     Type: Custom::RedshiftCommand
@@ -336,7 +336,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY orders FROM 's3://redshift-awslabs/data/orders/orders.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY orders FROM 's3://redshift-immersionday-labs/data/orders/orders.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   DMLPart:
     Type: Custom::RedshiftCommand
@@ -358,7 +358,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY part FROM 's3://redshift-awslabs/data/part/part.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY part FROM 's3://redshift-immersionday-labs/data/part/part.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   DMLSupplier:
     Type: Custom::RedshiftCommand
@@ -380,7 +380,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY supplier FROM 's3://redshift-awslabs/data/supplier/supplier.json' manifest iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY supplier FROM 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   DMLLineitem:
     Type: Custom::RedshiftCommand
@@ -402,7 +402,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY lineitem FROM 's3://redshift-awslabs/data/lineitem/lineitem.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY lineitem FROM 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   DMLPartSupp:
     Type: Custom::RedshiftCommand
@@ -424,7 +424,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY partsupp FROM 's3://redshift-awslabs/data/partsupp/partsupp.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY partsupp FROM 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
         - {Role: !Ref Role}
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
