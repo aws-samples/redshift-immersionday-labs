@@ -21,7 +21,7 @@ Parameters:
   NodeType:
     Description: The type of node to be provisioned
     Type: String
-    Default: dc2.8xlarge
+    Default: ds2.8xlarge
     AllowedValues:
     - ds2.xlarge
     - ds2.8xlarge
