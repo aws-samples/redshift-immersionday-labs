@@ -270,10 +270,10 @@ There are two Amazon Redshift system tables that can be helpful in troubleshooti
 
 In addition, you can validate your data without actually loading the table.  Use the NOLOAD option with the COPY command to make sure that your data file will load without any errors before running the actual data load.  Running COPY with the NOLOAD option is much faster than loading the data since it only parses the files.
 
-Let’s try to load the CUSTOMER table with a different data file with mismatched columns.  To copy this data you will need to replace the [Your-Access-Key-ID] and [Your-Secret-Access-Key] values in the script below.    
+Let’s try to load the CUSTOMER table with a different data file with mismatched columns.  To copy this data you will need to replace the [Your-AWS_Account_Id] and [Your-Redshift_Role] values in the script below.   
 ```
-COPY customer FROM 's3://redshift-awslabs/data/nation/nation.tbl.'
-credentials 'aws_access_key_id=[Your-Access-Key-ID];aws_secret_access_key=[Your-Secret-Access-Key]'
+COPY customer FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.'
+iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
 lzop delimiter '|' noload;
 ```
 
