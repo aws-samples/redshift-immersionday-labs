@@ -77,7 +77,7 @@ ANALYZE customer_v2;
 ```
 SELECT
   CAST(d.attname AS CHAR(50)),
-  SUM(CASE WHEN CAST(d.relname AS CHAR(50)) LIKE '%v2%'
+  SUM(CASE WHEN CAST(d.relname AS CHAR(50)) LIKE '%v1%'
 THEN b.size_in_mb ELSE 0 END) AS size_in_mb_v1,
   SUM(CASE WHEN CAST(d.relname AS CHAR(50)) LIKE '%v2%'
 THEN b.size_in_mb ELSE 0 END) AS size_in_mb_v2,
