@@ -104,7 +104,7 @@ Resources:
       - LambdaLoadRedshiftRole
     Properties:
         Code:
-          S3Bucket: redshift-awslabs
+          S3Bucket: redshift-immersionday-labs
           S3Key: RedshiftCommand.zip
         Description: Command handler to send SQL to Redshift
         FunctionName: RedshiftCommand
