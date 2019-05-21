@@ -31,8 +31,10 @@ To launch this cluster and configure security automatically using cloud formatio
 Create or identify a VPC where you will launch your Redshift cluster.  For our purposes we will [Create VPC](https://console.aws.amazon.com/vpc/home?#CreateVpc:) to isolate the traffic.
 ![](../images/VPC.png)
 ### InternetGateway
-Create or identify an Internet Gateway.  For our purposes we will [Create Internet Gateway](https://console.aws.amazon.com/vpc/home?#Create%20Internet%20Gateway:).
+Create or identify an Internet Gateway.  For our purposes we will [Create Internet Gateway](https://console.aws.amazon.com/vpc/home?#Create%20Internet%20Gateway:). Once created, select the Internet Gateway and attach it to the VPC created earlier.  
 ![](../images/InternetGateway.png)
+![](../images/InternetGatewayAttach1.png)
+![](../images/InternetGatewayAttach2.png)
 ### Subnets
 Create or identify a subnet with a default route to an Internet Gateway.  For our purposes we will [Create Subnet](https://console.aws.amazon.com/vpc/home?#CreateSubnet:) attached to the previously created VPC in two different Availability Zones to improve fault tolerance.
 ![](../images/Subnet1.png)
