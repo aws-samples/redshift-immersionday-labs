@@ -49,6 +49,7 @@ Create a Redshift [Cluster Subnet Group](https://console.aws.amazon.com/redshift
 ![](../images/SubnetGroup.png)
 ### Security Group
 Create a [Security Group](https://console.aws.amazon.com/vpc/home#SecurityGroups:sort=groupId) associated to the VPC you created earlier.  Edit the Security Group to create a rule which allows incoming connections from your IP Address.
+![](../images/SecurityGroup.png)
 ### S3 Access
 Create an [IAM Role](https://console.aws.amazon.com/iam/home?#/roles$new?step=type) with the type "Redshift" and the use-case of "Redshift - Customizable" and attach the AmazonS3ReadOnlyAccess policy to the role.
 ![](../images/Role.png)
