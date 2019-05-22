@@ -55,10 +55,10 @@ Create an [IAM Role](https://console.aws.amazon.com/iam/home?#/roles$new?step=ty
 ![](../images/Role.png)
 
 ## Launch Redshift Cluster
-Navigate to the [Amazon Redshift Dashboard](https://console.aws.amazon.com/redshift) and click on the "Launch Cluster" button.  
+Navigate to the [Amazon Redshift Dashboard](https://console.aws.amazon.com/redshift/home#cluster-list:) and click on the "Launch Cluster" button.  
 * Cluster Details - Enter values as appropriate for your organization.  Note the Master user password as you will not be able to retrieve this value later.  ![](../images/ClusterDetails.png)
-* Node Configuration - Modify the Cluster type to Multi Node and set the Number of compute nodes to 4.  ![](../images/NodeConfiguration.png)
-* Additional Configuration - Choose the VPC, Subnet Group, VPC Security group, and Role which you identified or created earlier.  ![](../images/AdditionalConfiguration.png)
+* Node Configuration - Modify the Cluster type to Multi Node and set the Number of compute nodes to 2.  ![](../images/NodeConfiguration.png)
+* Additional Configuration - Choose the VPC, Subnet Group, VPC Security group, and Role which you identified or created earlier.  ![](../images/AdditionalConfiguration.png)  ![](../images/AssignRole.png)
 
 ## Configure Client Tool
 * Launch SQL Workbench/J and setup the Redshift JDBC Driver (see [Prerequisites](#prerequisites) for more details on downloading and installing these tools).
