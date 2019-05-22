@@ -34,6 +34,7 @@ Note: This cloud formation template will create a Lambda function which will tri
 Copy the following create table statements to create tables in the database.  
 ```
 DROP TABLE IF EXISTS region;
+
 CREATE TABLE region (
   R_REGIONKEY bigint NOT NULL PRIMARY KEY,
   R_NAME varchar(25),
@@ -41,6 +42,7 @@ CREATE TABLE region (
 diststyle all;
 
 DROP TABLE IF EXISTS nation;
+
 CREATE TABLE nation (
   N_NATIONKEY bigint NOT NULL PRIMARY KEY,
   N_NAME varchar(25),
@@ -49,6 +51,7 @@ CREATE TABLE nation (
 diststyle all;
 
 DROP TABLE IF EXISTS customer;
+
 create table customer (
   C_CUSTKEY bigint encode zstd NOT NULL PRIMARY KEY,
   C_NAME varchar(25) encode zstd,
@@ -61,6 +64,7 @@ create table customer (
 diststyle all;
 
 DROP TABLE IF EXISTS orders;
+
 create table orders (
   O_ORDERKEY bigint encode zstd NOT NULL PRIMARY KEY,
   O_CUSTKEY bigint encode zstd REFERENCES customer(C_CUSTKEY),
@@ -75,6 +79,7 @@ distkey (O_ORDERKEY)
 sortkey (O_ORDERDATE);
 
 DROP TABLE IF EXISTS part;
+
 create table part (
   P_PARTKEY bigint encode zstd NOT NULL PRIMARY KEY,
   P_NAME varchar(55),
@@ -88,6 +93,7 @@ create table part (
 diststyle all;
 
 DROP TABLE IF EXISTS supplier;
+
 create table supplier (
   S_SUPPKEY bigint encode zstd NOT NULL PRIMARY KEY,
   S_NAME varchar(25)  encode zstd,
@@ -99,6 +105,7 @@ create table supplier (
 diststyle all;                                                              
 
 DROP TABLE IF EXISTS lineitem;
+
 create table lineitem (
   L_ORDERKEY bigint encode zstd NOT NULL REFERENCES orders(O_ORDERKEY),
   L_PARTKEY bigint encode zstd REFERENCES part(P_PARTKEY),
@@ -121,6 +128,7 @@ distkey (L_ORDERKEY)
 sortkey (L_RECEIPTDATE);
 
 DROP TABLE IF EXISTS partsupp;
+
 create table partsupp (
   PS_PARTKEY bigint encode zstd NOT NULL REFERENCES part(P_PARTKEY),
   PS_SUPPKEY bigint encode zstd NOT NULL REFERENCES supplier(S_SUPPKEY),
@@ -220,7 +228,6 @@ order by col;
 Delete rows from the ORDERS table.
 ```
 delete orders where o_orderdate between '1992-01-01' and '1993-01-01';
-commit;
 ```
 
 Confirm that Redshift did not automatically reclaim space by running the following query again and noting the values have not changed.
