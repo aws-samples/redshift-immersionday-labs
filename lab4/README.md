@@ -31,7 +31,7 @@ Choosing a SQL editor ([Query Editor](https://console.aws.amazon.com/redshift/ho
 	https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/NYC-Pub/green/?region=us-west-2&tab=overview&prefixSearch=green_tripdata_2016
 	````
 	
-	![](/images/green_2016.png)
+	![](../images/green_2016.png)
 
 * Here's Sample data from one file which can be previewed directly in S3:
 
@@ -39,7 +39,7 @@ Choosing a SQL editor ([Query Editor](https://console.aws.amazon.com/redshift/ho
 	https://s3.console.aws.amazon.com/s3/object/us-west-2.serverless-analytics/NYC-Pub/green/green_tripdata_2013-08.csv?region=us-west-2&tab=select
 	````
 
-	![](/images/green_preview.png)
+	![](../images/green_preview.png)
 	
 	
 ### Build you DDL 
@@ -136,15 +136,15 @@ ORDER BY 1;
 ````
 https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-Pub/?region=us-east-1&tab=overview
 ````
-![](/images/canonical_year.png)
+![](../images/canonical_year.png)
 ````
 https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/?region=us-east-1&tab=overview
 ````
-![](/images/canonical_month.png)
+![](../images/canonical_month.png)
 ````
 https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/type%253Dgreen/?region=us-east-1&tab=overview
 ````
-![](/images/canonical_type.png)
+![](../images/canonical_type.png)
 
 
 ### Create external schema (and DB) for Redshift Spectrum
