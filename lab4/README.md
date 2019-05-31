@@ -4,7 +4,7 @@ In this lab, we show you how to query petabytes of data with Amazon Redshift and
 
 ## Contents
 * [Before You Begin](#before-you-begin)
-* [What happend in 2016](#what-happend-in-2016)
+* [What Happened in 2016](#what-happened-in-2016)
 * [Go Back In Time](#go-back-in-time)
 * [Create a Single Version of Truth](#create-a-single-version-of-truth)
 * [Plan for the Future](#plan-for-the-future)
@@ -20,7 +20,7 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-AWS-Account_Id]
 
 
-## What happened in 2016
+## What Happened in 2016
 
 * Assemble your toolset:
 	* Choosing a SQL editor (SQL Workbench, PGWeb, psql, query from Console, etc.) 
