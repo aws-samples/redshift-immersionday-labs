@@ -75,7 +75,8 @@ CREATE TABLE workshop_das.green_201601_csv
   payment_type            VARCHAR(4),
   trip_type               VARCHAR(4)
 )
-DISTSTYLE EVEN SORTKEY (passenger_count,pickup_datetime);
+DISTSTYLE EVEN 
+SORTKEY (passenger_count,pickup_datetime);
 ```
 
 </p>
@@ -214,7 +215,7 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
   ```python
   SELECT TO_CHAR(pickup_datetime, 'YYYY-MM-DD'),
   COUNT(*)
-  FROM adb305.NYTaxiRides
+  FROM adb305.ny_pub
   GROUP BY 1
   ORDER BY 1;
   ```
@@ -253,7 +254,7 @@ Create a view that covers both the January, 2016 Green company DAS table with th
 
 ```python
 CREATE TABLE workshop_das.taxi_201601 AS 
-SELECT * FROM adb305.NYTaxiRides 
+SELECT * FROM adb305.ny_pub 
 WHERE year = 2016 AND month = 1 AND type = 'green';
 ```
 
@@ -289,7 +290,6 @@ Here's the ANALYZE COMPRESSION output in case you want to use it:
 
 
 ### Complete populating the table 
-
 Add to the January, 2016 table with an INSERT/SELECT statement for the other taxi companies.
 
 <details><summary>Hint</summary>
@@ -298,7 +298,7 @@ Add to the January, 2016 table with an INSERT/SELECT statement for the other tax
 ```python
 INSERT INTO workshop_das.taxi_201601 (
   SELECT * 
-  FROM adb305.NYTaxiRides 
+  FROM adb305.ny_pub 
   WHERE year = 2016 AND month = 1 AND type != 'green');
 ```
 
@@ -306,15 +306,15 @@ INSERT INTO workshop_das.taxi_201601 (
 </details>
 
 ### Create a new Spectrum table 
-Create a new Spectrum table **adb305.NYTaxiRides** (or simply drop the January, 2016 partitions).
+Now that we've loaded all January, 2016 data, we can remove the partitions from the Spectrum table so there is no overlap between the direct-attached storage (DAS) table and the Spectrum table.
 
 <details><summary>Hint</summary>
 <p>
 
 ```python
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=1, type='fhv'); 
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=1, type='green'); 
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=1, type='yellow'); 
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=1, type='fhv'); 
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=1, type='green'); 
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=1, type='yellow'); 
 ```
 
 </p>
@@ -331,7 +331,7 @@ Create a view **adb305_view_NYTaxiRides** from **workshop_das.taxi_201601** that
 CREATE VIEW adb305_view_NYTaxiRides AS
   SELECT * FROM workshop_das.taxi_201601
   UNION ALL 
-  SELECT * FROM adb305.NYTaxiRides
+  SELECT * FROM adb305.ny_pub
 WITH NO SCHEMA BINDING;
 
 ```
@@ -418,8 +418,8 @@ XN Merge  (cost=1000090029268.92..1000090029268.92 rows=2 width=48)
 
 ````
 EXPLAIN 
-SELECT <b>passenger_count</b>, COUNT(*) 
-FROM adb305.NYTaxiRides 
+SELECT passenger_count, COUNT(*) 
+FROM adb305.ny_pub 
 WHERE year = 2016 AND month IN (1,2) 
 GROUP BY 1 ORDER BY 1;
 ````
@@ -443,8 +443,8 @@ XN Merge  (cost=1000090005026.64..1000090005027.14 rows=200 width=12)
 
 ````
 EXPLAIN 
-SELECT <b>type</b>, COUNT(*) 
-FROM adb305.NYTaxiRides 
+SELECT type, COUNT(*) 
+FROM adb305.ny_pub 
 WHERE year = 2016 AND month IN (1,2) 
 GROUP BY 1 ORDER BY 1 ;
 ````
@@ -490,7 +490,7 @@ UNION ALL
 UNION ALL 
   SELECT * FROM workshop_das.taxi_201604
 UNION ALL 
-  SELECT * FROM adb305.NYTaxiRides
+  SELECT * FROM adb305.ny_pub
 WITH NO SCHEMA BINDING;
 ````
 	
@@ -500,7 +500,7 @@ WITH NO SCHEMA BINDING;
 CREATE OR REPLACE VIEW adb305_view_NYTaxiRides AS
    SELECT * FROM workshop_das.taxi_current
 UNION ALL 
-  SELECT * FROM adb305.NYTaxiRides
+  SELECT * FROM adb305.ny_pub
 WITH NO SCHEMA BINDING;
 ````
 
@@ -516,7 +516,7 @@ WITH NO SCHEMA BINDING;
 CREATE TABLE workshop_das.taxi_current 
 DISTSTYLE EVEN 
 SORTKEY(year, month, type) AS 
-SELECT * FROM adb305.NYTaxiRides WHERE 1 = 0;
+SELECT * FROM adb305.ny_pub WHERE 1 = 0;
 ````
 
 * And, create a helper table that doesn't include the partition columns from the Redshift Spectrum table.
@@ -537,7 +537,6 @@ CREATE TABLE workshop_das.taxi_loader AS
 COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=10/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
 COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=11/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
 COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=12/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
--- All 2016:
 COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=1/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
 COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=2/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
 COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=3/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
@@ -562,16 +561,14 @@ INSERT INTO workshop_das.taxi_current
 TRUNCATE workshop_das.taxi_loader;
 ````
 
-- Similarly, start Yellow loop.
-
 ### Redshift Spectrum can, of course, also be used to populate the table(s).
 
 ````
-INSERT INTO  workshop_das.taxi_201601    SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (2,3); 
-/* Need to complete the first quarter of 2016.*/
-CREATE TABLE workshop_das.taxi_201602 AS SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (4,5,6);
-CREATE TABLE workshop_das.taxi_201603 AS SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (7,8,9);
-CREATE TABLE workshop_das.taxi_201604 AS SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (10,11,12);
+DROP TABLE IF EXISTS workshop_das.taxi_201601;
+CREATE TABLE workshop_das.taxi_201601 AS SELECT * FROM adb305.ny_pub WHERE year = 2016 AND month IN (1,2,3); 
+CREATE TABLE workshop_das.taxi_201602 AS SELECT * FROM adb305.ny_pub WHERE year = 2016 AND month IN (4,5,6);
+CREATE TABLE workshop_das.taxi_201603 AS SELECT * FROM adb305.ny_pub WHERE year = 2016 AND month IN (7,8,9);
+CREATE TABLE workshop_das.taxi_201604 AS SELECT * FROM adb305.ny_pub WHERE year = 2016 AND month IN (10,11,12);
 ````
 
 ### Adjust your Redshift Spectrum table to exclude the Q4 2015 data
@@ -579,51 +576,51 @@ CREATE TABLE workshop_das.taxi_201604 AS SELECT * FROM adb305.NYTaxiRides WHERE 
 **Note for the Redshift Editor users:** Adjust accordingly based on how many of the partitions you added above.
 
 ````
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=10, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=10, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=10, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=11, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=11, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=11, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=12, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=12, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=12, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=1, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=1, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=1, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=2, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=2, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=2, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=3, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=3, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=3, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=4, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=4, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=4, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=5, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=5, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=5, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=6, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=6, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=6, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=7, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=7, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=7, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=8, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=8, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=8, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=9, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=9, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=9, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=10, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=10, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=10, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=11, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=11, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=11, type='green');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=12, type='yellow');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=12, type='fhv');
-ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=12, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=10, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=10, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=10, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=11, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=11, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=11, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=12, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=12, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2015, month=12, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=1, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=1, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=1, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=2, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=2, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=2, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=3, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=3, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=3, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=4, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=4, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=4, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=5, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=5, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=5, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=6, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=6, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=6, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=7, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=7, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=7, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=8, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=8, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=8, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=9, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=9, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=9, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=10, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=10, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=10, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=11, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=11, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=11, type='green');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=12, type='yellow');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=12, type='fhv');
+ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=12, type='green');
 ````
 
 * Now, regardless of method, there’s a view covering the trailing 5 quarters in Redshift DAS, and all of time on Redshift Spectrum, completely transparent to users of the view. What would be the steps to “age-off” the Q4 2015 data?
