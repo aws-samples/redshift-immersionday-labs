@@ -26,14 +26,14 @@ Choosing a SQL editor ([Query Editor](https://console.aws.amazon.com/redshift/ho
 
 * Load the Green company data for January 2016 into Redshift direct-attached storage (DAS) with COPY.
 * Collect supporting/refuting evidence for the impact of the January, 2016 blizzard on taxi usage.
-* The CSV data is by month on Amazon S3. Here's a quick screenshot via the CLI: 
+* The CSV data is by month on Amazon S3. Here's a quick screenshot from the S3 console: 
 	````
 	https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/NYC-Pub/green/?region=us-west-2&tab=overview&prefixSearch=green_tripdata_2016
 	````
 	
 	![](../images/green_2016.png)
 
-* Here's Sample data from one file which can be previewed directly in S3:
+* Here's Sample data from one file which can be previewed directly in the S3 console:
 
 	````
 	https://s3.console.aws.amazon.com/s3/object/us-west-2.serverless-analytics/NYC-Pub/green/green_tripdata_2013-08.csv?region=us-west-2&tab=select
