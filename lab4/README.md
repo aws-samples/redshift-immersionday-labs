@@ -1,4 +1,4 @@
-# Lab 4 - Modernize your data warehouse with Amazon Redshift spectrum
+# Lab 4 - Modernize Your Data Warehouse with Amazon Redshift Spectrum
 
 In this lab, we show you how to query petabytes of data with Amazon Redshift and exabytes of data in your Amazon S3 data lake, without loading or moving objects. 
 
@@ -19,11 +19,10 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-Redshift_Role]
 * [Your-AWS-Account_Id]
 
+Choosing a SQL editor ([Query Editor](https://console.aws.amazon.com/redshift/home?#query:), SQL WorkbenchJ, PGWeb, psql, etc.) 
+
 
 ## What Happened in 2016
-
-* Assemble your toolset:
-	* Choosing a SQL editor (SQL Workbench, PGWeb, psql, query from Console, etc.) 
 
 * Load the Green company data for January 2016 into Redshift direct-attached storage (DAS) with COPY.
 * Collect supporting/refuting evidence for the impact of the January, 2016 blizzard on taxi usage.
@@ -98,7 +97,7 @@ IGNOREBLANKLINES
 </p>
 </details>
 
-**HINT HINT: The `[Your-Redshift_Role]` and `[Your-AWS-Account_Id]` in the above command should be replaced with the values determined at the beginning of the lab.**
+**HINT: The `[Your-Redshift_Role]` and `[Your-AWS-Account_Id]` in the above command should be replaced with the values determined at the beginning of the lab.**
 
 ### Pin-point the Blizzard 
 
