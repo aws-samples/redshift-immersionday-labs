@@ -4,9 +4,10 @@ In this lab, we show you how to query petabytes of data with Amazon Redshift and
 
 ## Contents
 * [Before You Begin](#before-you-begin)
-* [Scenario 1: What happend in 2016](#scenario-1\:-what-happend-in-2016)
-* [Scenario 2: Go Back In Time](#scenario-2\:-go-back-in-time)
-* [Scenario 3: Create a Single Version of Truth](#scenario-3\:-create-a-single-version-of-truth)
+* [What happend in 2016](#what-happend-in-2016)
+* [Go Back In Time](#go-back-in-time)
+* [Create a Single Version of Truth](#create-a-single-version-of-truth)
+* [Plan for the Future](#plan-for-the-future)
 * [Before You Leave](#before-you-leave)
 
 ## Before You Begin
@@ -19,7 +20,7 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-AWS-Account_Id]
 
 
-## Scenario 1: What happened in 2016
+## What happened in 2016
 
 * Assemble your toolset:
 	* Choosing a SQL editor (SQL Workbench, PGWeb, psql, query from Console, etc.) 
@@ -86,7 +87,7 @@ Build your copy command to copy the data from Amazon S3. This dataset has the nu
 ```python
 COPY workshop_das.green_201601_csv
 FROM 's3://us-west-2.serverless-analytics/NYC-Pub/green/green_tripdata_2016-01.csv'
-IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-Redshift_Role]:role/[Your-AWS-Account_Id]'
+IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
 DATEFORMAT 'auto'
 IGNOREHEADER 1
 DELIMITER ','
@@ -118,7 +119,7 @@ ORDER BY 1;
 </details>
 
 
-## Scenario 2- Go Back in Time
+## Go Back in Time
 
 * Query historical data residing on S3:
 	* Create external DB for Redshift Spectrum.
@@ -148,7 +149,7 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
 
 
 ### Create external schema (and DB) for Redshift Spectrum
-* Create an external schema **spectrumdb** from your database **spectrumdb**
+* Create an external schema **adb305** from your database **spectrumdb**
 
 	<details><summary>Hint</summary>
 	<p>
@@ -156,7 +157,7 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
 	```python
 	CREATE external SCHEMA adb305
 	FROM data catalog DATABASE 'spectrumdb' 
-	IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' 
+	IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
 	CREATE external DATABASE if not exists;
 	```
 	
@@ -207,7 +208,7 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
 	</p>
 	</details>
 
-* Run the query from the previous step using the external table instead of the data loaded into the Redshift storage.
+* Run the query from the previous step using the external table instead of the direct-attached storage (DAS).
 
 	<details><summary>Hint</summary>
 	<p>
@@ -242,7 +243,7 @@ Quick Note on QLM: The WLM configuration properties are either dynamic or static
 https://docs.aws.amazon.com/redshift/latest/mgmt/workload-mgmt-config.html
 ```
 
-## Scenario 3- Create a Single Version of Truth
+## Create a Single Version of Truth
 
 ### Create a view 
 
@@ -467,28 +468,21 @@ XN Merge  (cost=1000075000042.52..1000075000042.52 rows=1 width=30)
                                       ->  S3 Seq Scan adb305.nytaxirides location:"s3://us-west-2.serverless-analytics/canonical/NY-Pub" format:PARQUET  (cost=0.00..30000000.00 rows=3000000000 width=0)
 ````
 
-## Scenario 4- Plan for the Future
+## Plan for the Future
 
 * Allow for trailing 5 quarters reporting by adding the Q4 2015 data to Redshift DAS:
 	* Anticipating the we’ll want to ”age-off” the oldest quarter on a 3 month basis, architect your DAS table to make this easy to maintain and query.
 	* Adjust your Redshift Spectrum table to exclude the Q4 2015 data.
 * Develop and execute a plan to move the Q4 2015 data to S3.
 	* What are the discrete steps to be performed?
-	* What extra-Redshift functionality must be leverage as of Monday, November 27, 2018?
+	* What extra-Redshift functionality must be leveraged?
 	* Simulating the extra-Redshift steps with the existing Parquet data, age-off the Q4 2015 data from Redshift DAS 	and perform any needed steps to maintain a single version of the truth.
 
-* Several options to accomplish the goal
+* There are several options to accomplish this goal. Anticipating that we’ll want to ”age-off” the oldest quarter on a 3 month basis, architect your DAS table to make this easy to maintain and query. How about something like this?
 
-![GitHub Logo](/images/table_pop_strat.png)
-
-
-* Anticipating that we’ll want to ”age-off” the oldest quarter on a 3 month basis, architect your DAS table to make this easy to maintain and query.
-
-* How about something like this:
-
-	<pre><code>
-	CREATE OR REPLACE VIEW adb305_view_NYTaxiRides AS
-   SELECT * FROM workshop_das.taxi_201504 <b>Note how these are business quarters</b>
+````
+CREATE OR REPLACE VIEW adb305_view_NYTaxiRides AS
+  SELECT * FROM workshop_das.taxi_201504 
 UNION ALL 
   SELECT * FROM workshop_das.taxi_201601
 UNION ALL 
@@ -500,18 +494,18 @@ UNION ALL
 UNION ALL 
   SELECT * FROM adb305.NYTaxiRides
 WITH NO SCHEMA BINDING;
-	</code></pre>
+````
 	
 * Or something like this? Bulk DELETE-s in Redshift are actually quite fast (with one-time single-digit minute time to VACUUM), so this is also a valid configuration as well:
 
-	<pre><code>
-	CREATE OR REPLACE VIEW adb305_view_NYTaxiRides AS
+````	
+CREATE OR REPLACE VIEW adb305_view_NYTaxiRides AS
    SELECT * FROM workshop_das.taxi_current
 UNION ALL 
   SELECT * FROM adb305.NYTaxiRides
 WITH NO SCHEMA BINDING;
-	</code></pre>
-	
+````
+
 * Don’t forget a quick ANALYZE and VACUUM after completing either version.
 
 * If needed, the Redshift DAS tables can also be populated from the Parquet data with COPY. Note: This will highlight a data design when we created the Parquet data
@@ -520,75 +514,73 @@ WITH NO SCHEMA BINDING;
 
 * We’re going to show how to work with the scenario where this pattern wasn’t followed. Use the single table option for this example
 	
-	````
-	CREATE TABLE workshop_das.taxi_current DISTSTYLE EVEN SORTKEY(year, month, type) AS SELECT * FROM adb305.NYTaxiRides WHERE 1 = 0;
-
-	````
+````
+CREATE TABLE workshop_das.taxi_current 
+DISTSTYLE EVEN 
+SORTKEY(year, month, type) AS 
+SELECT * FROM adb305.NYTaxiRides WHERE 1 = 0;
+````
 
 * And, create a helper table that doesn't include the partition columns from the Redshift Spectrum table.
 
-	````
-	CREATE TABLE workshop_das.taxi_loader AS SELECT vendorid, pickup_datetime, dropoff_datetime, ratecode, passenger_count, trip_distance, fare_amount, total_amount, payment_type FROM workshop_das.taxi_current WHERE 1 = 0;
-
-	````
+````
+CREATE TABLE workshop_das.taxi_loader AS 
+  SELECT vendorid, pickup_datetime, dropoff_datetime, ratecode, passenger_count, 
+  	trip_distance, fare_amount, total_amount, payment_type 
+  FROM workshop_das.taxi_current 
+  WHERE 1 = 0;
+````
 
 ### Parquet copy continued
 
-* The population could be scripted easily; there are also a few different patterns that could be followed, (this isn't the only one):
-	- Start Green loop.
-	- Q4 2015.
+* The population could be scripted easily; there are also a few different patterns that could be followed.  Below is a script which issues a seperate copy command for each partition where the **type=green**.  Once complete, seperate scripts would need to be used for other **type** partitions.
 
-	<pre><code>	
-	COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=10/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=11/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=12/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
+````
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=10/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=11/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=12/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
 -- All 2016:
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=1/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=2/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=3/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=4/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=5/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=6/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=7/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=8/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=9/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=10/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=11/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=12/type=green' IAM_ROLE 'arn:aws:iam::XXXXXXXXXXXX:role/mySpectrumRole' FORMAT AS PARQUET;
-	</code></pre>
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=1/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=2/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=3/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=4/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=5/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=6/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=7/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=8/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=9/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=10/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=11/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=12/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+````
 
-	<pre><code>
-	INSERT INTO workshop_das.taxi_current SELECT *, DATE_PART(year,pickup_datetime), DATE_PART(month,pickup_datetime), 'green' FROM workshop_das.taxi_loader;
-	
-	TRUNCATE workshop_das.taxi_loader;
-	</code></pre>
+````
+INSERT INTO workshop_das.taxi_current 
+  SELECT *, DATE_PART(year,pickup_datetime), DATE_PART(month,pickup_datetime), 'green' 
+  FROM workshop_das.taxi_loader;
+````
+
+````
+TRUNCATE workshop_das.taxi_loader;
+````
 
 - Similarly, start Yellow loop.
 
 ### Redshift Spectrum can, of course, also be used to populate the table(s).
 
-<pre><code>
-INSERT INTO  workshop_das.taxi_201601    SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (2,3); /* Need to complete the first quarter of 2016.*/
+````
+INSERT INTO  workshop_das.taxi_201601    SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (2,3); 
+/* Need to complete the first quarter of 2016.*/
 CREATE TABLE workshop_das.taxi_201602 AS SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (4,5,6);
 CREATE TABLE workshop_das.taxi_201603 AS SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (7,8,9);
 CREATE TABLE workshop_das.taxi_201604 AS SELECT * FROM adb305.NYTaxiRides WHERE year = 2016 AND month IN (10,11,12);
-</code></pre>
+````
 
 ### Adjust your Redshift Spectrum table to exclude the Q4 2015 data
 
 **Note for the Redshift Editor users:** Adjust accordingly based on how many of the partitions you added above.
 
-<pre><code>
-WITH generate_smallint_series AS (select row_number() over () as n from workshop_das.green_201601_csv limit 65536)
-, part_years AS (select n AS year_num from generate_smallint_series where n between 2015 and 2016)
-, part_months AS (select n AS month_num from generate_smallint_series where n between 1 and 12)
-, taxi_companies AS (SELECT 'fhv' taxi_vendor UNION ALL SELECT 'green' UNION ALL SELECT 'yellow')
-
-SELECT 'ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=' || year_num || ', month=' || month_num || ', type=\'' || taxi_vendor || '\');'
-FROM part_years, part_months, taxi_companies WHERE year_num = 2016 or (year_num = 2015 and month_num IN (10,11,12)) ORDER BY year_num, month_num;
-
-Or
-
+````
 ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=10, type='fhv');
 ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=10, type='yellow');
 ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2015, month=10, type='green');
@@ -634,7 +626,7 @@ ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=11, type='green')
 ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=12, type='yellow');
 ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=12, type='fhv');
 ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=12, type='green');
-</code></pre>
+````
 
 * Now, regardless of method, there’s a view covering the trailing 5 quarters in Redshift DAS, and all of time on Redshift Spectrum, completely transparent to users of the view. What would be the steps to “age-off” the Q4 2015 data?
 
@@ -645,5 +637,5 @@ ALTER TABLE adb305.NYTaxiRides DROP PARTITION(year=2016, month=12, type='green')
 * Remove the data from the Redshift DAS table:
 	* Either DELETE or DROP TABLE (depending on the implementation).
 
-**You have already done all of the steps in previous scenarios for this workshop. You have the toolset in your mind to do this!
-**
+## Before You Leave
+If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources.
