@@ -20,31 +20,27 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-AWS-Account_Id]
 * [Your-Glue_Role]
 
-Choosing a SQL editor ([Query Editor](https://console.aws.amazon.com/redshift/home?#query:), SQL WorkbenchJ, PGWeb, psql, etc.) 
-
+It also assumes you have either installed and configured SQL WorkbenchJ or will be using the online [Query Editor](https://console.aws.amazon.com/redshift/home?#query:).
 
 ## What Happened in 2016
-
+In the first part of this lab, we will perform the following activities:
 * Load the Green company data for January 2016 into Redshift direct-attached storage (DAS) with COPY.
 * Collect supporting/refuting evidence for the impact of the January, 2016 blizzard on taxi usage.
 * The CSV data is by month on Amazon S3. Here's a quick screenshot from the S3 console: 
-	````
-	https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/NYC-Pub/green/?region=us-west-2&tab=overview&prefixSearch=green_tripdata_2016
-	````
-	
-	![](../images/green_2016.png)
+````
+https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/NYC-Pub/green/?region=us-west-2&tab=overview&prefixSearch=green_tripdata_2016
+````
+![](../images/green_2016.png)
 
 * Here's Sample data from one file which can be previewed directly in the S3 console:
-
-	````
-	https://s3.console.aws.amazon.com/s3/object/us-west-2.serverless-analytics/NYC-Pub/green/green_tripdata_2013-08.csv?region=us-west-2&tab=select
-	````
-
-	![](../images/green_preview.png)
+````
+https://s3.console.aws.amazon.com/s3/object/us-west-2.serverless-analytics/NYC-Pub/green/green_tripdata_2013-08.csv?region=us-west-2&tab=select
+````
+![](../images/green_preview.png)
 	
 	
 ### Build you DDL 
-- Create a schema `workshop_das` and table `workshop_das.green_201601_csv` for tables that will reside on the Redshift compute nodes, AKA the Redshift direct-attached storage (DAS) tables.
+Create a schema `workshop_das` and table `workshop_das.green_201601_csv` for tables that will reside on the Redshift compute nodes, AKA the Redshift direct-attached storage (DAS) tables.
 
 <details><summary>Hint</summary>
 <p>
@@ -84,7 +80,6 @@ SORTKEY (passenger_count,pickup_datetime);
 </details>
 
 ### Build your Copy Command 
-
 Build your copy command to copy the data from Amazon S3. This dataset has the number of taxi rides in the month of January 2016.
 
 <details><summary>Hint</summary>
@@ -107,7 +102,6 @@ IGNOREBLANKLINES
 **HINT: The `[Your-Redshift_Role]` and `[Your-AWS-Account_Id]` in the above command should be replaced with the values determined at the beginning of the lab.**
 
 ### Pin-point the Blizzard 
-
 In this month, there is a date which had the lowest number of taxi rides due to a blizzard. Can you find that date?
 
 <details><summary>SQL-Based Hint</summary>
@@ -126,7 +120,7 @@ ORDER BY 1;
 
 
 ## Go Back in Time
-
+In the next part of this lab, we will perform the following activities:
 * Query historical data residing on S3 by create an external DB for Redshift Spectrum.
 * Introspect the historical data, perhaps rolling-up the data in novel ways to see trends over time, or other dimensions.
 * Enforce reasonable use of the cluster with Redshift Spectrum-specific Query Monitoring Rules (QMR).
@@ -149,7 +143,7 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
 
 
 ### Create external schema (and DB) for Redshift Spectrum
-* Because external tables are stored in a shared Glue Catalog for use within the AWS ecosystem, they can be built and maintained using a few different tools, e.g. Athena, Redshift, and Glue. 
+Because external tables are stored in a shared Glue Catalog for use within the AWS ecosystem, they can be built and maintained using a few different tools, e.g. Athena, Redshift, and Glue. 
 	
 * Use the AWS Glue Crawler to create your external table adb305.ny_pub stored in parquet format under location s3://us-west-2.serverless-analytics/canonical/NY-Pub/.
 
@@ -205,8 +199,7 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
 	</p>
 	</details>
   
-### (Optional) Add a Redshift Spectrum Query Monitoring Rule to ensure reasonable use
-
+### Add a Redshift Spectrum Query Monitoring Rule to ensure reasonable use
 In Amazon Redshift workload management (WLM), query monitoring rules define metrics-based performance boundaries for WLM queues and specify what action to take when a query goes beyond those boundaries. Setup a Query Monitoring Rule to ensure reasonable use.
 
 ```
@@ -225,11 +218,10 @@ https://docs.aws.amazon.com/redshift/latest/mgmt/workload-mgmt-config.html
 ```
 
 ## Create a Single Version of Truth
+In the next part of this lab, we will demonstrate how to create a view which has data that is consolidated from S3 via Spectrum and the Redshift direct-attached storage.
 
 ### Create a view 
-
 Create a view that covers both the January, 2016 Green company DAS table with the historical data residing on S3 to make a single table exclusively for the Green data scientists. Use CTAS to create a table with data from January, 2016 for the Green company. Compare the runtime to populate this with the COPY runtime earlier.
-
 
 <details><summary>Hint</summary>
 <p>
@@ -287,7 +279,7 @@ INSERT INTO workshop_das.taxi_201601 (
 </p>
 </details>
 
-### Create a new Spectrum table 
+### Remove overlaps in the Spectrum table 
 Now that we've loaded all January, 2016 data, we can remove the partitions from the Spectrum table so there is no overlap between the direct-attached storage (DAS) table and the Spectrum table.
 
 <details><summary>Hint</summary>
@@ -449,7 +441,7 @@ XN Merge  (cost=1000075000042.52..1000075000042.52 rows=1 width=30)
 ````
 
 ## Plan for the Future
-
+In this final part of this lab, we will compare different strategies for maintaining more recent or *HOT* data within Redshift direct-attached storage, and keeping older *COLD* data in S3 by performing the following steps:
 * Allow for trailing 5 quarters reporting by adding the Q4 2015 data to Redshift DAS:
 	* Anticipating the we’ll want to ”age-off” the oldest quarter on a 3 month basis, architect your DAS table to make this easy to maintain and query.
 	* Adjust your Redshift Spectrum table to exclude the Q4 2015 data.
