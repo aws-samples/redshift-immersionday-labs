@@ -45,42 +45,47 @@ Choosing a SQL editor ([Query Editor](https://console.aws.amazon.com/redshift/ho
 ### Build you DDL 
 - Create a schema `workshop_das` and table `workshop_das.green_201601_csv` for tables that will reside on the Redshift compute nodes, AKA the Redshift direct-attached storage (DAS) tables.
 
-````
-	CREATE SCHEMA workshop_das;
+<details><summary>Hint</summary>
+<p>
+	
+```python
+CREATE SCHEMA workshop_das;
 
-	CREATE TABLE workshop_das.green_201601_csv 
-	(
-	  vendorid                VARCHAR(4),
-	  pickup_datetime         TIMESTAMP,
-	  dropoff_datetime        TIMESTAMP,
-	  store_and_fwd_flag      VARCHAR(1),
-	  ratecode                INT,
-	  pickup_longitude        FLOAT4,
-	  pickup_latitude         FLOAT4,
-	  dropoff_longitude       FLOAT4,
-	  dropoff_latitude        FLOAT4,
-	  passenger_count         INT,
-	  trip_distance           FLOAT4,
-	  fare_amount             FLOAT4,
-	  extra                   FLOAT4,
-	  mta_tax                 FLOAT4,
-	  tip_amount              FLOAT4,
-	  tolls_amount            FLOAT4,
-	  ehail_fee               FLOAT4,
-	  improvement_surcharge   FLOAT4,
-	  total_amount            FLOAT4,
-	  payment_type            VARCHAR(4),
-	  trip_type               VARCHAR(4)
-	)
-	DISTSTYLE EVEN SORTKEY (passenger_count,pickup_datetime);
+CREATE TABLE workshop_das.green_201601_csv 
+(
+  vendorid                VARCHAR(4),
+  pickup_datetime         TIMESTAMP,
+  dropoff_datetime        TIMESTAMP,
+  store_and_fwd_flag      VARCHAR(1),
+  ratecode                INT,
+  pickup_longitude        FLOAT4,
+  pickup_latitude         FLOAT4,
+  dropoff_longitude       FLOAT4,
+  dropoff_latitude        FLOAT4,
+  passenger_count         INT,
+  trip_distance           FLOAT4,
+  fare_amount             FLOAT4,
+  extra                   FLOAT4,
+  mta_tax                 FLOAT4,
+  tip_amount              FLOAT4,
+  tolls_amount            FLOAT4,
+  ehail_fee               FLOAT4,
+  improvement_surcharge   FLOAT4,
+  total_amount            FLOAT4,
+  payment_type            VARCHAR(4),
+  trip_type               VARCHAR(4)
+)
+DISTSTYLE EVEN SORTKEY (passenger_count,pickup_datetime);
+```
 
-````
+</p>
+</details>
 
 ### Build your Copy Command 
 
 Build your copy command to copy the data from Amazon S3. This dataset has the number of taxi rides in the month of January 2016.
 
-<details><summary>SQL-Based Hint</summary>
+<details><summary>Hint</summary>
 <p>
 
 ```python
@@ -120,16 +125,10 @@ ORDER BY 1;
 
 ## Go Back in Time
 
-* Query historical data residing on S3:
-	* Create external DB for Redshift Spectrum.
-	* Create the external table on Spectrum.
-	* Write a script or SQL statement to add partitions.
-	* Create and populate a small number of dimension tables on Redshift DAS.
+* Query historical data residing on S3 by create an external DB for Redshift Spectrum.
 * Introspect the historical data, perhaps rolling-up the data in novel ways to see trends over time, or other dimensions.
 * Enforce reasonable use of the cluster with Redshift Spectrum-specific Query Monitoring Rules (QMR).
 	* Test the QMR setup by writing an excessive-use query.
-* For the dimension table(s), feel free to leverage multi-row insert in Redshift:
-	`https://docs.aws.amazon.com/redshift/latest/dg/c_best-practices-multi-row-inserts.html`
 
 **Note the partitioning scheme is Year, Month, Type (where Type is a taxi company). Here's a quick Screenshot:**
 
