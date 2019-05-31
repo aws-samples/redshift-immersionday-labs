@@ -18,6 +18,7 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-Redshift_Password]
 * [Your-Redshift_Role]
 * [Your-AWS-Account_Id]
+* [Your-Glue_Role]
 
 Choosing a SQL editor ([Query Editor](https://console.aws.amazon.com/redshift/home?#query:), SQL WorkbenchJ, PGWeb, psql, etc.) 
 
@@ -148,7 +149,31 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
 
 
 ### Create external schema (and DB) for Redshift Spectrum
-* Create an external schema **adb305** from your database **spectrumdb**
+* Because external tables are stored in a shared Glue Catalog for use within the AWS ecosystem, they can be built and maintained using a few different tools, e.g. Athena, Redshift, and Glue. 
+	
+* Use the AWS Glue Crawler to create your external table adb305.ny_pub stored in parquet format under location s3://us-west-2.serverless-analytics/canonical/NY-Pub/.
+
+	1. Navigate to the **Glue Crawler Page**, click on *Add Crawler*, and enter the Crawler name *NYTaxiCrawler*.
+	```
+	https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers
+	```
+	![](../images/crawler_2.png)
+	1. When prompted, choose *S3* as the data store and the Include path of *s3://us-west-2.serverless-analytics/canonical/NY-Pub*
+	![](../images/crawler_1.png)
+	1. When prompted, click on *Add database* and enter the Database of *spectrumdb*
+	![](../images/crawler_3.png)
+	1. When prompted, *Choose an existing IAM Role* and select [Your-Glue_Role].
+	![](../images/crawler_4.png)
+	1. Select all remaining defaults. Once the Crawler has been created, click on *Run Crawler*.
+	![](../images/crawler_5.png)
+	1. Once the Crawler has completed its run, you will see a new table in the Glue Catalog.
+	```
+	https://console.aws.amazon.com/glue/home?#catalog:tab=tables
+	```
+	![](../images/crawler_6.png)
+
+
+* In Redshift create an external schema **adb305** pointing to your Glue Catalog Database **spectrumdb**
 
 	<details><summary>Hint</summary>
 	<p>
@@ -162,50 +187,7 @@ https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-P
 	
 	</p>
 	</details>
-  
-* Create your external table adb305.NYTaxiRides for vendorid, pickup_datetime, dropoff_datetime, ratecode, passenger_count, trip_distance, fare_amount, total_amount, payment_type stored in parquet format under location s3://us-west-2.serverless-analytics/canonical/NY-Pub/
 
-	<details><summary>Hint</summary>
-	<p>
-	
-	```python
-  CREATE EXTERNAL TABLE adb305.NYTaxiRides (
-   vendorid VARCHAR(6),
-   pickup_datetime TIMESTAMP,
-   dropoff_datetime TIMESTAMP,
-   ratecode INT,
-   passenger_count INT,
-   trip_distance FLOAT8,
-   fare_amount FLOAT8,
-   total_amount FLOAT8,
-   payment_type INT
-   )
-  PARTITIONED BY (YEAR INT, MONTH INT, "TYPE" CHAR(6))
-  STORED AS PARQUET
-  LOCATION 's3://us-west-2.serverless-analytics/canonical/NY-Pub/'
-   ;
-   ```
-	
-	</p>
-	</details>
-
-* Because external tables are stored in a shared Glue Catalog for use within the AWS ecosystem, there are few options for maintaining partitions of an external table.  
-
-	* issuing an **ALTER TABLE ADD PARTITION** command, for each partition, directly within your Redshift Query Editor
-	* creating a AWS Glue Crawler to poll the external location on a regular interval
-	* issuing a **MSCK REPAIR TABLE** command in Athena
-
-* Navigate to Athena (https://console.aws.amazon.com/athena/home) and issue the MSCK REPAIR TABLE command to update the partitions in the table.  
-
-  <details><summary>Hint</summary>
-	<p>
-
-  ```python
-  MSCK REPAIR TABLE spectrumdb.nytaxirides;
-  ```
-
-	</p>
-	</details>
 
 * Run the query from the previous step using the external table instead of the direct-attached storage (DAS).
 
