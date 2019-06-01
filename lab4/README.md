@@ -147,57 +147,65 @@ Because external tables are stored in a shared Glue Catalog for use within the A
 	
 * Use the AWS Glue Crawler to create your external table adb305.ny_pub stored in parquet format under location s3://us-west-2.serverless-analytics/canonical/NY-Pub/.
 
-	1. Navigate to the **Glue Crawler Page**, click on *Add Crawler*, and enter the Crawler name *NYTaxiCrawler*.
+	1. Navigate to the **Glue Crawler Page**.
 	```
 	https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers
 	```
-	![](../images/crawler_2.png)
-	1. When prompted, choose *S3* as the data store and the Include path of *s3://us-west-2.serverless-analytics/canonical/NY-Pub*
+	![](../images/crawler_0.png)
+	1. Click on *Add Crawler*, and enter the crawler name *NYTaxiCrawler* and click *Next*.
 	![](../images/crawler_1.png)
-	1. When prompted, click on *Add database* and enter the Database of *spectrumdb*
+	1. Select *Data stores* as the source type and click *Next*.
+	![](../images/crawler_2.png)
+	1. Choose *S3* as the data store and the include path of *s3://us-west-2.serverless-analytics/canonical/NY-Pub*
 	![](../images/crawler_3.png)
-	1. When prompted, *Choose an existing IAM Role* and select [Your-Glue_Role].
+	1. *Choose an existing IAM Role* and select [Your-Glue_Role].
 	![](../images/crawler_4.png)
-	1. Select all remaining defaults. Once the Crawler has been created, click on *Run Crawler*.
+	1. Select *Run on demand* for the frequency.
 	![](../images/crawler_5.png)
-	1. Once the Crawler has completed its run, you will see a new table in the Glue Catalog.
+	1. Click on *Add database* and enter the Database of *spectrumdb*
+	![](../images/crawler_6.png)
+	1. Select all remaining defaults. Once the Crawler has been created, click on *Run Crawler*.
+	![](../images/crawler_7.png)
+	1. Once the Crawler has completed its run, you will see a new table in the Glue Catalog.  
 	```
 	https://console.aws.amazon.com/glue/home?#catalog:tab=tables
 	```
-	![](../images/crawler_6.png)
+	![](../images/crawler_8.png)
+	1. Click on the *ny_pub* table, notice the recordCount of 2.87 billion. 
+	![](../images/crawler_9.png)
 
 
 * In Redshift create an external schema **adb305** pointing to your Glue Catalog Database **spectrumdb**
 
-	<details><summary>Hint</summary>
-	<p>
-	
-	```python
-	CREATE external SCHEMA adb305
-	FROM data catalog DATABASE 'spectrumdb' 
-	IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
-	CREATE external DATABASE if not exists;
-	```
-	
-	</p>
-	</details>
+<details><summary>Hint</summary>
+<p>
+
+```python
+CREATE external SCHEMA adb305
+FROM data catalog DATABASE 'spectrumdb' 
+IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
+CREATE external DATABASE if not exists;
+```
+
+</p>
+</details>
 
 
 * Run the query from the previous step using the external table instead of the direct-attached storage (DAS).
 
-	<details><summary>Hint</summary>
-	<p>
-  
-  ```python
-  SELECT TO_CHAR(pickup_datetime, 'YYYY-MM-DD'),
-  COUNT(*)
-  FROM adb305.ny_pub
-  GROUP BY 1
-  ORDER BY 1;
-  ```
-  
-	</p>
-	</details>
+<details><summary>Hint</summary>
+<p>
+
+```python
+SELECT TO_CHAR(pickup_datetime, 'YYYY-MM-DD'),
+COUNT(*)
+FROM adb305.ny_pub
+GROUP BY 1
+ORDER BY 1;
+```
+
+</p>
+</details>
   
 ### Add a Redshift Spectrum Query Monitoring Rule to ensure reasonable use
 In Amazon Redshift workload management (WLM), query monitoring rules define metrics-based performance boundaries for WLM queues and specify what action to take when a query goes beyond those boundaries. Setup a Query Monitoring Rule to ensure reasonable use.
@@ -315,9 +323,9 @@ WITH NO SCHEMA BINDING;
 
 ### Is it Surprising this is valid SQL?
 
-- Note the use of the partition columns in the SELECT and WHERE clauses. Where were those columns in your Spectrum table definition?
-- Note the filters being applied either at the partition or file levels in the Spectrum portion of the query (versus the Redshift DAS section).
-- If you actually run the query (and not just generate the explain plan), does the runtime surprise you? Why or why not?
+* Note the use of the partition columns in the SELECT and WHERE clauses. Where were those columns in your Spectrum table definition?
+* Note the filters being applied either at the partition or file levels in the Spectrum portion of the query (versus the Redshift DAS section).
+* If you actually run the query (and not just generate the explain plan), does the runtime surprise you? Why or why not?
 
 ````
 EXPLAIN 
@@ -353,7 +361,7 @@ XN Merge  (cost=1000090025653.20..1000090025653.21 rows=2 width=48)
                                                                   <b> Filter: (passenger_count = 4)</b>
 ````
 
-- Now include Spectrum data by adding a month whose data is in Spectrum
+* Now include Spectrum data by adding a month whose data is in Spectrum
 
 ````
 EXPLAIN 
@@ -508,21 +516,21 @@ CREATE TABLE workshop_das.taxi_loader AS
 * The population could be scripted easily; there are also a few different patterns that could be followed.  Below is a script which issues a seperate copy command for each partition where the **type=green**.  Once complete, seperate scripts would need to be used for other **type** partitions.
 
 ````
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=10/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=11/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=12/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=1/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=2/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=3/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=4/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=5/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=6/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=7/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=8/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=9/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=10/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=11/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
-COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=12/type=green' IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=10/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=11/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2015/month=12/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=1/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=2/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=3/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=4/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=5/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=6/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=7/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=8/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=9/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=10/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=11/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
+COPY workshop_das.taxi_loader FROM 's3://us-west-2.serverless-analytics/canonical/NY-Pub/year=2016/month=12/type=green' IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]' FORMAT AS PARQUET;
 ````
 
 ````
