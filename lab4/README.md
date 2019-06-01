@@ -20,7 +20,10 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-AWS-Account_Id]
 * [Your-Glue_Role]
 
-It also assumes you have either installed and configured SQL WorkbenchJ or will be using the online [Query Editor](https://console.aws.amazon.com/redshift/home?#query:).
+It also assumes you have either installed and configured SQL WorkbenchJ or will be using the online Query Editor.
+```
+https://console.aws.amazon.com/redshift/home?#query:
+```
 
 ## What Happened in 2016
 In the first part of this lab, we will perform the following activities:
@@ -175,7 +178,7 @@ Because external tables are stored in a shared Glue Catalog for use within the A
 	![](../images/crawler_9.png)
 
 
-* In Redshift create an external schema **adb305** pointing to your Glue Catalog Database **spectrumdb**
+* Now that the table has been catalogge, switch back to your Redshift query editor and create an external schema **adb305** pointing to your Glue Catalog Database **spectrumdb**
 
 <details><summary>Hint</summary>
 <p>
@@ -200,6 +203,7 @@ CREATE external DATABASE if not exists;
 SELECT TO_CHAR(pickup_datetime, 'YYYY-MM-DD'),
 COUNT(*)
 FROM adb305.ny_pub
+WHERE YEAR = 2016 and Month = 01
 GROUP BY 1
 ORDER BY 1;
 ```
@@ -253,7 +257,12 @@ Note: What about column compression/encoding? Remember that on a CTAS, Amazon Re
 https://docs.aws.amazon.com/redshift/latest/dg/r_CTAS_usage_notes.html 
 
 ````
-Here's the ANALYZE COMPRESSION output in case you want to use it:
+
+```
+ANALYZE COMPRESSION workshop_das.taxi_201601
+```
+
+Here's the output in case you want to use it:
 
 |Column|Encoding|Est_reduction_pct|
 |---|---|---|
@@ -451,7 +460,7 @@ XN Merge  (cost=1000075000042.52..1000075000042.52 rows=1 width=30)
 ## Plan for the Future
 In this final part of this lab, we will compare different strategies for maintaining more recent or *HOT* data within Redshift direct-attached storage, and keeping older *COLD* data in S3 by performing the following steps:
 * Allow for trailing 5 quarters reporting by adding the Q4 2015 data to Redshift DAS:
-	* Anticipating the we’ll want to ”age-off” the oldest quarter on a 3 month basis, architect your DAS table to make this easy to maintain and query.
+	* Anticipating that we’ll want to ”age-off” the oldest quarter on a 3 month basis, architect your DAS table to make this easy to maintain and query.
 	* Adjust your Redshift Spectrum table to exclude the Q4 2015 data.
 * Develop and execute a plan to move the Q4 2015 data to S3.
 	* What are the discrete steps to be performed?
@@ -485,8 +494,6 @@ UNION ALL
   SELECT * FROM adb305.ny_pub
 WITH NO SCHEMA BINDING;
 ````
-
-* Don’t forget a quick ANALYZE and VACUUM after completing either version.
 
 * If needed, the Redshift DAS tables can also be populated from the Parquet data with COPY. Note: This will highlight a data design when we created the Parquet data
 
