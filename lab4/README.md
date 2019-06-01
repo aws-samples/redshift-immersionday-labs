@@ -105,6 +105,7 @@ IGNOREBLANKLINES
 
 <details><summary>Hint</summary>
 <p>
+	
 ```
 select count(1) from workshop_das.green_201601_csv;
 --1445285
