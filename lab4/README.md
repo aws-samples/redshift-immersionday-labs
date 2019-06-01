@@ -150,10 +150,7 @@ Because external tables are stored in a shared Glue Catalog for use within the A
 	
 * Use the AWS Glue Crawler to create your external table adb305.ny_pub stored in parquet format under location s3://us-west-2.serverless-analytics/canonical/NY-Pub/.
 
-	1. Navigate to the **Glue Crawler Page**.
-	```
-	https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers
-	```
+	1. Navigate to the **Glue Crawler Page**. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers
 	![](../images/crawler_0.png)
 	1. Click on *Add Crawler*, and enter the crawler name *NYTaxiCrawler* and click *Next*.
 	![](../images/crawler_1.png)
@@ -169,10 +166,7 @@ Because external tables are stored in a shared Glue Catalog for use within the A
 	![](../images/crawler_6.png)
 	1. Select all remaining defaults. Once the Crawler has been created, click on *Run Crawler*.
 	![](../images/crawler_7.png)
-	1. Once the Crawler has completed its run, you will see a new table in the Glue Catalog.  
-	```
-	https://console.aws.amazon.com/glue/home?#catalog:tab=tables
-	```
+	1. Once the Crawler has completed its run, you will see a new table in the Glue Catalog. https://console.aws.amazon.com/glue/home?#catalog:tab=tables
 	![](../images/crawler_8.png)
 	1. Click on the *ny_pub* table, notice the recordCount of 2.87 billion. 
 	![](../images/crawler_9.png)
