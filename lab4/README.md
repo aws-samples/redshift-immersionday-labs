@@ -91,7 +91,7 @@ Build your copy command to copy the data from Amazon S3. This dataset has the nu
 ```python
 COPY workshop_das.green_201601_csv
 FROM 's3://us-west-2.serverless-analytics/NYC-Pub/green/green_tripdata_2016-01.csv'
-IAM_ROLE 'aws_iam_role=arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
+IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
 DATEFORMAT 'auto'
 IGNOREHEADER 1
 DELIMITER ','
