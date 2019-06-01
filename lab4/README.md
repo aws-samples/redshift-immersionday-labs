@@ -83,7 +83,7 @@ SORTKEY (passenger_count,pickup_datetime);
 </details>
 
 ### Build your Copy Command 
-Build your copy command to copy the data from Amazon S3. This dataset has the number of taxi rides in the month of January 2016.
+* Build your copy command to copy the data from Amazon S3. This dataset has the number of taxi rides in the month of January 2016.
 
 <details><summary>Hint</summary>
 <p>
@@ -97,6 +97,17 @@ IGNOREHEADER 1
 DELIMITER ','
 IGNOREBLANKLINES
 ;
+```
+</p>
+</details>
+
+* Determine how many rows you just loaded.
+
+<details><summary>Hint</summary>
+<p>
+```
+select count(1) from workshop_das.green_201601_csv;
+--1445285
 ```
 
 </p>
