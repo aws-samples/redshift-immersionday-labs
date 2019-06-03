@@ -36,7 +36,7 @@ https://console.aws.amazon.com/vpc/home?#CreateVpc:
 ### InternetGateway
 Create or identify an Internet Gateway.  For our purposes we will create an **Internet Gateway**. Once created, select the Internet Gateway and attach it to the VPC created earlier.  
 ```
-https://console.aws.amazon.com/vpc/home?#Create%20Internet%20Gateway:)
+https://console.aws.amazon.com/vpc/home?#Create%20Internet%20Gateway:
 ```
 ![](../images/InternetGateway.png)
 ![](../images/InternetGatewayAttach1.png)
@@ -90,15 +90,17 @@ https://console.aws.amazon.com/redshift/home#cluster-list:
 
 ## Configure Client Tool
 * Launch SQL Workbench/J and setup the Redshift JDBC Driver (see [Prerequisites](#prerequisites) for more details on downloading and installing these tools).
-* Navigate to [File | Manage Drivers] and select "Amazon Redshift" and set the driver Library location. Click Ok.  ![](../images/Library.png)
+* Navigate to [File | Manage Drivers] and select "Amazon Redshift" and set the driver Library location. Click Ok.
+![](../images/Library.png)
 * Navigate to [File | Connect Window] to create a new connection profile and modify the following settings and once complete click on the "Test Connection" button.
   * Name - "LabConnection"
   * Driver - Amazon Redshift (com.amazon.redshift.jdbc.Driver)
-  * URL - Find this by navigating to the [Cluster List](https://console.aws.amazon.com/redshift/home?cluster-details:#cluster-list:), selecting your cluster, and copying the JDBC URL.  ![](../images/JDBCUrl.png)
+  * URL - Find this by navigating to the [Cluster List](https://console.aws.amazon.com/redshift/home?cluster-details:#cluster-list:), selecting your cluster, and copying the JDBC URL.  
+  ![](../images/JDBCUrl.png)
   * Username - [Master user name]
   * Password - [Master user password]
   * Autocommit - Enabled
-
+  
 ![](../images/Connection.png)
 
 ## Run Sample Query
