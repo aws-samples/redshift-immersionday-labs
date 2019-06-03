@@ -42,7 +42,7 @@ https://s3.console.aws.amazon.com/s3/object/us-west-2.serverless-analytics/NYC-P
 ![](../images/green_preview.png)
 	
 	
-### Build you DDL 
+### Build your DDL 
 Create a schema `workshop_das` and table `workshop_das.green_201601_csv` for tables that will reside on the Redshift compute nodes, AKA the Redshift direct-attached storage (DAS) tables.
 
 <details><summary>Hint</summary>
