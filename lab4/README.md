@@ -620,12 +620,12 @@ ALTER TABLE adb305.ny_pub DROP PARTITION(year=2016, month=12, type='green');
 
 * Now, regardless of method, there’s a view covering the trailing 5 quarters in Redshift DAS, and all of time on Redshift Spectrum, completely transparent to users of the view. What would be the steps to “age-off” the Q4 2015 data?
 
-* Put a copy of the data from Redshift DAS table to S3. Listen closely this week for a possible announcement around this step! What would be the command(s)?
-	* UNLOAD to Parquet.
-* Extend the Redshift Spectrum table to cover the Q4 2015 data with Redshift Spectrum.
-	* ADD Partition.
-* Remove the data from the Redshift DAS table:
-	* Either DELETE or DROP TABLE (depending on the implementation).
+	1. Put a copy of the data from Redshift DAS table to S3. What would be the command(s)?
+		* UNLOAD
+	1. Extend the Redshift Spectrum table to cover the Q4 2015 data with Redshift Spectrum.
+		* ADD Partition.
+	1. Remove the data from the Redshift DAS table:
+		* Either DELETE or DROP TABLE (depending on the implementation).
 
 ## Before You Leave
 If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources.
