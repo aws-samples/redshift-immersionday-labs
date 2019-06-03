@@ -28,37 +28,65 @@ To launch this cluster and configure security automatically using cloud formatio
 
 ## Configure Security
 ### VPC
-Create or identify a VPC where you will launch your Redshift cluster.  For our purposes we will [Create VPC](https://console.aws.amazon.com/vpc/home?#CreateVpc:) to isolate the traffic.
+Create or identify a VPC where you will launch your Redshift cluster.  For our purposes we will create a **VPC** to isolate the traffic.
+```
+https://console.aws.amazon.com/vpc/home?#CreateVpc:
+```
 ![](../images/VPC.png)
 ### InternetGateway
-Create or identify an Internet Gateway.  For our purposes we will [Create Internet Gateway](https://console.aws.amazon.com/vpc/home?#Create%20Internet%20Gateway:). Once created, select the Internet Gateway and attach it to the VPC created earlier.  
+Create or identify an Internet Gateway.  For our purposes we will create an **Internet Gateway**. Once created, select the Internet Gateway and attach it to the VPC created earlier.  
+```
+https://console.aws.amazon.com/vpc/home?#Create%20Internet%20Gateway:)
+```
 ![](../images/InternetGateway.png)
 ![](../images/InternetGatewayAttach1.png)
 ![](../images/InternetGatewayAttach2.png)
 ### Subnets
-Create or identify a subnet with a default route to an Internet Gateway.  For our purposes we will [Create Subnet](https://console.aws.amazon.com/vpc/home?#CreateSubnet:) attached to the previously created VPC in two different Availability Zones to improve fault tolerance.
+Create or identify a subnet with a default route to an Internet Gateway.  For our purposes we will create a **Subnet** attached to the previously created VPC in two different Availability Zones to improve fault tolerance.
+```
+https://console.aws.amazon.com/vpc/home?#CreateSubnet:
+```
 ![](../images/Subnet1.png)
 ![](../images/Subnet2.png)
 ### Route Table
-If you have created new subnets, you must [Create Route](https://console.aws.amazon.com/vpc/home?#CreateRouteTable:) with the default route pointed to the internet gateway and with the new subnets added.
+If you have created new subnets, you must create a **Route Table** with the default route pointed to the internet gateway and with the new subnets added.
+```
+https://console.aws.amazon.com/vpc/home?#CreateRouteTable:
+```
 ![](../images/Route.png)
 ![](../images/EditRoute.png)
 ![](../images/EditSubnet.png)
 ### Subnet Group
-Create a Redshift [Cluster Subnet Group](https://console.aws.amazon.com/redshift/home?#subnet-groups:cluster=) containing the two subnets you created earlier.
+Create a Redshift **Cluster Subnet Group** containing the two subnets you created earlier.
+```
+https://console.aws.amazon.com/redshift/home?#subnet-groups:
+```
 ![](../images/SubnetGroup.png)
 ### Security Group
-Create a [Security Group](https://console.aws.amazon.com/vpc/home#SecurityGroups:sort=groupId) associated to the VPC you created earlier.  Edit the Security Group to create a rule which allows incoming connections from your IP Address.
+Create a **Security Group** associated to the VPC you created earlier.  Edit the Security Group to create a rule which allows incoming connections from your IP Address.
+```
+https://console.aws.amazon.com/vpc/home#SecurityGroups:sort=groupId
+```
 ![](../images/SecurityGroup.png)
 ### S3 Access
-Create an [IAM Role](https://console.aws.amazon.com/iam/home?#/roles$new?step=type) with the type "Redshift" and the use-case of "Redshift - Customizable" and attach the AmazonS3ReadOnlyAccess and AWSGlueConsoleFullAccess policies to the role.
+Create an **IAM Role** with the type "Redshift" and the use-case of "Redshift - Customizable" and attach the AmazonS3ReadOnlyAccess and AWSGlueConsoleFullAccess policies to the role.
+```
+https://console.aws.amazon.com/iam/home?#/roles$new?step=type
+```
 ![](../images/Role.png)
 
 ## Launch Redshift Cluster
-Navigate to the [Amazon Redshift Dashboard](https://console.aws.amazon.com/redshift/home#cluster-list:) and click on the "Launch Cluster" button.  
-* Cluster Details - Enter values as appropriate for your organization.  Note the Master user password as you will not be able to retrieve this value later.  ![](../images/ClusterDetails.png)
-* Node Configuration - Modify the Cluster type to Multi Node and set the Number of compute nodes to 2.  ![](../images/NodeConfiguration.png)
-* Additional Configuration - Choose the VPC, Subnet Group, VPC Security group, and Role which you identified or created earlier.  ![](../images/AdditionalConfiguration.png)  ![](../images/AssignRole.png)
+Navigate to the **Amazon Redshift Dashboard** and click on the "Launch Cluster" button.  
+```
+https://console.aws.amazon.com/redshift/home#cluster-list:
+```
+* Cluster Details - Enter values as appropriate for your organization.  Note the Master user password as you will not be able to retrieve this value later.
+![](../images/ClusterDetails.png)
+* Node Configuration - Modify the Cluster type to Multi Node and set the Number of compute nodes to 2.
+![](../images/NodeConfiguration.png)
+* Additional Configuration - Choose the VPC, Subnet Group, VPC Security group, and Role which you identified or created earlier.
+![](../images/AdditionalConfiguration.png)  
+![](../images/AssignRole.png)
 
 ## Configure Client Tool
 * Launch SQL Workbench/J and setup the Redshift JDBC Driver (see [Prerequisites](#prerequisites) for more details on downloading and installing these tools).
