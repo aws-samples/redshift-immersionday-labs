@@ -20,7 +20,7 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-AWS-Account_Id]
 * [Your-Glue_Role]
 
-It also assumes you have either installed and configured SQL WorkbenchJ or will be using the online Query Editor.
+It also assumes you have either installed and configured a Clinet tool. For more details on configuring SQL WorkbenchJ as your client tool, see [Lab 1 - Creating Redshift Clusters : Configure Client Tool](../lab1/README.md#configure-client-tool). As an alternative you can use the Redshift provided online Query Editor which does not require an installation.
 ```
 https://console.aws.amazon.com/redshift/home?#query:
 ```
