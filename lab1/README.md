@@ -89,8 +89,9 @@ https://console.aws.amazon.com/redshift/home#cluster-list:
 ![](../images/AssignRole.png)
 
 ## Configure Client Tool
-* Launch SQL Workbench/J and setup the Redshift JDBC Driver (see [Prerequisites](#prerequisites) for more details on downloading and installing these tools).
-* Navigate to [File | Manage Drivers] and select "Amazon Redshift" and set the driver Library location. Click Ok.
+* See [Prerequisites](#prerequisites) for more details on downloading and installing [SQL Workbench/J](http://www.sql-workbench.net) and the [Redshift JDBC Driver](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-to-cluster.html). 
+* Launch SQL Workbench/J and navigate to [File | Manage Drivers].
+* Select "Amazon Redshift" and set the driver Library location to where you downloaded the Redshift JDBC Driver. Click Ok.
 ![](../images/Library.png)
 * Navigate to [File | Connect Window] to create a new connection profile and modify the following settings and once complete click on the "Test Connection" button.
   * Name - "LabConnection"
