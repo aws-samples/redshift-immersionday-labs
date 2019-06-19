@@ -184,7 +184,7 @@ Because external tables are stored in a shared Glue Catalog for use within the A
 	![](../images/crawler_9.png)
 
 
-* Now that the table has been catalogge, switch back to your Redshift query editor and create an external schema **adb305** pointing to your Glue Catalog Database **spectrumdb**
+* Now that the table has been cataloged, switch back to your Redshift query editor and create an external schema **adb305** pointing to your Glue Catalog Database **spectrumdb**
 
 <details><summary>Hint</summary>
 <p>
