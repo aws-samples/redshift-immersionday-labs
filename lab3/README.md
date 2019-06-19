@@ -466,7 +466,7 @@ SELECT * FROM orders_v2;
 EXPLAIN
 SELECT c_mktsegment, o_orderpriority, sum(o_totalprice)
 FROM Customer_v3 c
-JOIN Orders o on c.c_custkey = o.o_custkey
+JOIN Orders_v4 o on c.c_custkey = o.o_custkey
 GROUP BY c_mktsegment, o_orderpriority;
 ```
 
