@@ -89,7 +89,7 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 * Use the AWS Glue Crawler to create your external table clickstream.clickstream-csv10 and clickstream.clickstream-parquet1  under locations s3://redshift-spectrum-bigdata-blog-datasets/clickstream-csv10 and s3://redshift-spectrum-bigdata-blog-datasets/clickstream-parquet1 respectively.
 
 	1. Navigate to the **Glue Crawler Page**. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers
-	<img src=../images/crawler_0.png style="border: 1px solid;box-shadow: 5px 10px #888888;">
+	<img src=../images/crawler_0.png style="border: 1px solid;box-shadow: 5px 10px #888888;" />
 	1. Click on *Add Crawler*, and enter the crawler name *NYTaxiCrawler* and click *Next*.
 	![](../images/crawler_1.png)
 	1. Select *Data stores* as the source type and click *Next*.
