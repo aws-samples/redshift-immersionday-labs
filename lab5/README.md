@@ -96,7 +96,7 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 	![](../images/crawler_2.png)
 	1. Choose *S3* as the data store and the include path of *s3://redshift-immersionday-labs/data/clickstream*
 	![](../images/crawler_3_clickstream.png)
-	1. *Choose an existing IAM Role* and select [Your-Glue_Role].  If you don't have a glue role, you can also select *Create an IAM role* and enter *clickstream* for the Role name.
+	1. *Choose an existing IAM Role* and select [Your-Glue_Role].  If you don't have a Glue Role, you can also select *Create an IAM role* and enter *clickstream* for the Role name.
 	![](../images/crawler_4_clickstream.png)
 	1. Select *Run on demand* for the frequency.
 	![](../images/crawler_5.png)
