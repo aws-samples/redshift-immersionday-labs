@@ -90,24 +90,29 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 
 	1. Navigate to the **Glue Crawler Page**. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers
 	![](../images/crawler_0.png)
-	1. Click on *Add Crawler*, and enter the crawler name *NYTaxiCrawler* and click *Next*.
-	![](../images/crawler_1.png)
+	1. Click on *Add Crawler*, and enter the crawler name *clickstream* and click *Next*.
+	![](../images/crawler_1_clickstream.png)
 	1. Select *Data stores* as the source type and click *Next*.
 	![](../images/crawler_2.png)
-	1. Choose *S3* as the data store and the include path of *s3://us-west-2.serverless-analytics/canonical/NY-Pub*
-	![](../images/crawler_3.png)
-	1. *Choose an existing IAM Role* and select [Your-Glue_Role].
-	![](../images/crawler_4.png)
+	1. Choose *S3* as the data store and the include path of *s3://redshift-immersionday-labs/data/clickstream*
+	![](../images/crawler_3_clickstream.png)
+	1. *Choose an existing IAM Role* and select [Your-Glue_Role].  If you don't have a glue role, you can also select *Create an IAM role* and enter *clickstream* for the Role name.
+	![](../images/crawler_4_clickstream.png)
 	1. Select *Run on demand* for the frequency.
 	![](../images/crawler_5.png)
-	1. Click on *Add database* and enter the Database of *spectrumdb*
-	![](../images/crawler_6.png)
+	1. Click on *Add database* and enter the Database of *clickstream*
+	![](../images/crawler_6_clickstream.png)
 	1. Select all remaining defaults. Once the Crawler has been created, click on *Run Crawler*.
-	![](../images/crawler_7.png)
-	1. Once the Crawler has completed its run, you will see a new table in the Glue Catalog. https://console.aws.amazon.com/glue/home?#catalog:tab=tables
-	![](../images/crawler_8.png)
-	1. Click on the *ny_pub* table, notice the recordCount of 2.87 billion. 
-	![](../images/crawler_9.png)
+	![](../images/crawler_7_clickstream.png)
+	1. Once the Crawler has completed its run, you will see two new tables in the Glue Catalog. https://console.aws.amazon.com/glue/home?#catalog:tab=tables
+	![](../images/crawler_8_clickstream.png)
+	1. Click on the *uservisits_parquet1* table, notice the recordCount of 2.87 billion. 
+	![](../images/crawler_9_clickstream.png)
+	1. Navigate back to the Glue Catalog and click on the *uservisits_csv* table, notice the column names have not been set.
+	![](../images/crawler_10_clickstream.png)
+	1. Click on *Edit Schema* and enter the column names as follows and click *Save*.
+	![](../images/crawler_11_clickstream.png)
+	
 
 
 
