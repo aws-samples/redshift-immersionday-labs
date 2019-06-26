@@ -21,8 +21,13 @@ This lab assumes you have launched a Redshift cluster and can gather the followi
 * [Your-Redshift_Password]
 * [Your-Redshift-Role]
 
+It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see [Lab 1 - Creating Redshift Clusters : Configure Client Tool](../lab1/README.md#configure-client-tool). As an alternative you can use the Redshift provided online Query Editor which does not require an installation.
+```
+https://console.aws.amazon.com/redshift/home?#query:
+```
+
 ## Cloud Formation
-To complete the loading of this sample data automatically using cloud formation, use the following link.
+To *skip this lab* and complete the loading of this sample data using cloud formation, use the following link.
 [![Launch](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=ImmersionLab2&templateURL=https://s3-us-west-2.amazonaws.com/redshift-immersionday-labs/lab2.yaml)
 
 Note: This cloud formation template will create a Lambda function which will trigger each of the data loads.  In order to trigger these loads securely, the Lambda function will be deployed to the same VPC as the Redshift cluster in a new set of Private Subnets with a NAT Gateway allowing the function to communicate to the Redshift Cluster.  In order to create this stack, you will need to gather the following information in addition to the items above.
@@ -33,6 +38,13 @@ Note: This cloud formation template will create a Lambda function which will tri
 ## Create Tables
 Copy the following create table statements to create tables in the database.  
 ```
+DROP TABLE IF EXISTS partsupp;
+DROP TABLE IF EXISTS lineitem;
+DROP TABLE IF EXISTS supplier;
+DROP TABLE IF EXISTS part;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS customer;
+DROP TABLE IF EXISTS nation;
 DROP TABLE IF EXISTS region;
 
 CREATE TABLE region (
@@ -41,8 +53,6 @@ CREATE TABLE region (
   R_COMMENT varchar(152))
 diststyle all;
 
-DROP TABLE IF EXISTS nation;
-
 CREATE TABLE nation (
   N_NATIONKEY bigint NOT NULL PRIMARY KEY,
   N_NAME varchar(25),
@@ -50,91 +60,79 @@ CREATE TABLE nation (
   N_COMMENT varchar(152))
 diststyle all;
 
-DROP TABLE IF EXISTS customer;
-
 create table customer (
-  C_CUSTKEY bigint encode zstd NOT NULL PRIMARY KEY,
-  C_NAME varchar(25) encode zstd,
-  C_ADDRESS varchar(40) encode zstd,
-  C_NATIONKEY bigint encode zstd REFERENCES nation(N_NATIONKEY),
-  C_PHONE varchar(15) encode zstd,
-  C_ACCTBAL decimal(18,4) encode zstd,
+  C_CUSTKEY bigint NOT NULL PRIMARY KEY,
+  C_NAME varchar(25),
+  C_ADDRESS varchar(40),
+  C_NATIONKEY bigint REFERENCES nation(N_NATIONKEY),
+  C_PHONE varchar(15),
+  C_ACCTBAL decimal(18,4),
   C_MKTSEGMENT varchar(10),
-  C_COMMENT varchar(117) encode zstd)
+  C_COMMENT varchar(117))
 diststyle all;
 
-DROP TABLE IF EXISTS orders;
-
 create table orders (
-  O_ORDERKEY bigint encode zstd NOT NULL PRIMARY KEY,
-  O_CUSTKEY bigint encode zstd REFERENCES customer(C_CUSTKEY),
-  O_ORDERSTATUS varchar(1) encode zstd,
-  O_TOTALPRICE decimal(18,4) encode zstd,
-  O_ORDERDATE Date encode zstd,
+  O_ORDERKEY bigint NOT NULL PRIMARY KEY,
+  O_CUSTKEY bigint REFERENCES customer(C_CUSTKEY),
+  O_ORDERSTATUS varchar(1),
+  O_TOTALPRICE decimal(18,4),
+  O_ORDERDATE Date,
   O_ORDERPRIORITY varchar(15),
-  O_CLERK varchar(15) encode zstd,
-  O_SHIPPRIORITY Integer encode zstd,
-  O_COMMENT varchar(79) encode zstd)
+  O_CLERK varchar(15),
+  O_SHIPPRIORITY Integer,
+  O_COMMENT varchar(79))
 distkey (O_ORDERKEY)
 sortkey (O_ORDERDATE);
 
-DROP TABLE IF EXISTS part;
-
 create table part (
-  P_PARTKEY bigint encode zstd NOT NULL PRIMARY KEY,
+  P_PARTKEY bigint NOT NULL PRIMARY KEY,
   P_NAME varchar(55),
-  P_MFGR  varchar(25)  encode zstd,
+  P_MFGR  varchar(25),
   P_BRAND varchar(10),
   P_TYPE varchar(25),
-  P_SIZE integer  encode zstd,
+  P_SIZE integer,
   P_CONTAINER varchar(10),
-  P_RETAILPRICE decimal(18,4)  encode zstd,
-  P_COMMENT varchar(23)  encode zstd)
+  P_RETAILPRICE decimal(18,4),
+  P_COMMENT varchar(23))
 diststyle all;
 
-DROP TABLE IF EXISTS supplier;
-
 create table supplier (
-  S_SUPPKEY bigint encode zstd NOT NULL PRIMARY KEY,
-  S_NAME varchar(25)  encode zstd,
-  S_ADDRESS varchar(40)  encode zstd,
-  S_NATIONKEY bigint  encode zstd REFERENCES nation(n_nationkey),
-  S_PHONE varchar(15)  encode zstd,
-  S_ACCTBAL decimal(18,4)  encode zstd,
-  S_COMMENT varchar(101)  encode zstd)
+  S_SUPPKEY bigint NOT NULL PRIMARY KEY,
+  S_NAME varchar(25),
+  S_ADDRESS varchar(40),
+  S_NATIONKEY bigint REFERENCES nation(n_nationkey),
+  S_PHONE varchar(15),
+  S_ACCTBAL decimal(18,4),
+  S_COMMENT varchar(101))
 diststyle all;                                                              
 
-DROP TABLE IF EXISTS lineitem;
-
 create table lineitem (
-  L_ORDERKEY bigint encode zstd NOT NULL REFERENCES orders(O_ORDERKEY),
-  L_PARTKEY bigint encode zstd REFERENCES part(P_PARTKEY),
-  L_SUPPKEY bigint encode zstd REFERENCES supplier(S_SUPPKEY),
-  L_LINENUMBER integer encode zstd NOT NULL,
+  L_ORDERKEY bigint NOT NULL REFERENCES orders(O_ORDERKEY),
+  L_PARTKEY bigint REFERENCES part(P_PARTKEY),
+  L_SUPPKEY bigint REFERENCES supplier(S_SUPPKEY),
+  L_LINENUMBER integer NOT NULL,
   L_QUANTITY decimal(18,4),
-  L_EXTENDEDPRICE decimal(18,4) encode zstd,
-  L_DISCOUNT decimal(18,4) encode zstd,
-  L_TAX decimal(18,4) encode zstd,
-  L_RETURNFLAG varchar(1) encode zstd,
-  L_LINESTATUS varchar(1) encode zstd,
-  L_SHIPDATE date encode zstd,
-  L_COMMITDATE date encode zstd,
-  L_RECEIPTDATE date encode zstd,
-  L_SHIPINSTRUCT varchar(25) encode zstd,
+  L_EXTENDEDPRICE decimal(18,4),
+  L_DISCOUNT decimal(18,4),
+  L_TAX decimal(18,4),
+  L_RETURNFLAG varchar(1),
+  L_LINESTATUS varchar(1),
+  L_SHIPDATE date,
+  L_COMMITDATE date,
+  L_RECEIPTDATE date,
+  L_SHIPINSTRUCT varchar(25),
   L_SHIPMODE varchar(10),
-  L_COMMENT varchar(44) encode zstd,
+  L_COMMENT varchar(44),
 PRIMARY KEY (L_ORDERKEY, L_LINENUMBER))
 distkey (L_ORDERKEY)
 sortkey (L_RECEIPTDATE);
 
-DROP TABLE IF EXISTS partsupp;
-
 create table partsupp (
-  PS_PARTKEY bigint encode zstd NOT NULL REFERENCES part(P_PARTKEY),
-  PS_SUPPKEY bigint encode zstd NOT NULL REFERENCES supplier(S_SUPPKEY),
+  PS_PARTKEY bigint NOT NULL REFERENCES part(P_PARTKEY),
+  PS_SUPPKEY bigint NOT NULL REFERENCES supplier(S_SUPPKEY),
   PS_AVAILQTY integer,
-  PS_SUPPLYCOST decimal(18,4)  encode zstd,
-  PS_COMMENT varchar(199) encode zstd,
+  PS_SUPPLYCOST decimal(18,4),
+  PS_COMMENT varchar(199),
 PRIMARY KEY (PS_PARTKEY, PS_SUPPKEY))
 diststyle even;
 ```
@@ -144,35 +142,35 @@ A COPY command loads large amounts of data much more efficiently than using INSE
 ```
 COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 
 COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 
 copy customer from 's3://redshift-immersionday-labs/data/customer/customer.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 
 copy orders from 's3://redshift-immersionday-labs/data/orders/orders.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 
 copy part from 's3://redshift-immersionday-labs/data/part/part.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 
 copy supplier from 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 
 copy lineitem from 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 
 copy partsupp from 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
 ```
 If you are using 4 dc2.large clusters nodes, the estimated time to load the data is as follows, note you can check timing information on actions in the performance and query tabs on the redshift console:
 * REGION (5 rows) - 20s
@@ -183,6 +181,12 @@ If you are using 4 dc2.large clusters nodes, the estimated time to load the data
 *	SUPPLIER - (1M rows) - 1m
 * LINEITEM - (600M rows) - 4m
 *	PARTSUPPLIER - (80M rows) 45s
+
+Note: A few key takeaways from the above COPY statements.
+1. COMPUPDATE PRESET ON will assign compression using the Amazon Redshift best practices related to the data type of the column but without analyzing the data in the table. 
+1. COPY for the REGION table points to a specfic file (region.tbl.lzo)
+1. COPY for other tables point to a prefix to multiple files (lineitem.tbl.)
+1. COPY for the SUPPLIER table points a manifest file (supplier.json)
 
 ## Table Maintenance - Analyze
 You should at regular intervals, update the statistical metadata that the query planner uses to build and choose optimal plans.  You can analyze a table explicitly by running the ANALYZE command.  When you load data with the COPY command, you can perform an analysis automatically by setting the STATUPDATE option to ON.  By default, the COPY command performs an analysis after it loads data into an empty table.
