@@ -119,7 +119,7 @@ Resources:
         Role:
           Fn::GetAtt: [LambdaLoadRedshiftRole,Arn]
         Runtime: python2.7
-        Timeout: 300
+        Timeout: 900
   CloudwatchVPCEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -174,80 +174,79 @@ Resources:
           N_COMMENT varchar(152))
         diststyle all;
 
-        CREATE TABLE customer (
-          C_CUSTKEY bigint encode zstd NOT NULL PRIMARY KEY,
-          C_NAME varchar(25) encode zstd,
-          C_ADDRESS varchar(40) encode zstd,
-          C_NATIONKEY bigint encode zstd REFERENCES nation(N_NATIONKEY),
-          C_PHONE varchar(15) encode zstd,
-          C_ACCTBAL decimal(18,4) encode zstd,
+        create table customer (
+          C_CUSTKEY bigint NOT NULL PRIMARY KEY,
+          C_NAME varchar(25),
+          C_ADDRESS varchar(40),
+          C_NATIONKEY bigint REFERENCES nation(N_NATIONKEY),
+          C_PHONE varchar(15),
+          C_ACCTBAL decimal(18,4),
           C_MKTSEGMENT varchar(10),
-          C_COMMENT varchar(117) encode zstd)
+          C_COMMENT varchar(117))
         diststyle all;
 
         create table orders (
-          O_ORDERKEY bigint encode zstd NOT NULL PRIMARY KEY,
-          O_CUSTKEY bigint encode zstd REFERENCES customer(C_CUSTKEY),
-          O_ORDERSTATUS varchar(1) encode zstd,
-          O_TOTALPRICE decimal(18,4) encode zstd,
-          O_ORDERDATE Date encode zstd,
+          O_ORDERKEY bigint NOT NULL PRIMARY KEY,
+          O_CUSTKEY bigint REFERENCES customer(C_CUSTKEY),
+          O_ORDERSTATUS varchar(1),
+          O_TOTALPRICE decimal(18,4),
+          O_ORDERDATE Date,
           O_ORDERPRIORITY varchar(15),
-          O_CLERK varchar(15) encode zstd,
-          O_SHIPPRIORITY Integer encode zstd,
-          O_COMMENT varchar(79) encode zstd)
+          O_CLERK varchar(15),
+          O_SHIPPRIORITY Integer,
+          O_COMMENT varchar(79))
         distkey (O_ORDERKEY)
         sortkey (O_ORDERDATE);
 
         create table part (
-          P_PARTKEY bigint encode zstd NOT NULL PRIMARY KEY,
+          P_PARTKEY bigint NOT NULL PRIMARY KEY,
           P_NAME varchar(55),
-          P_MFGR  varchar(25)  encode zstd,
+          P_MFGR  varchar(25),
           P_BRAND varchar(10),
           P_TYPE varchar(25),
-          P_SIZE integer  encode zstd,
+          P_SIZE integer,
           P_CONTAINER varchar(10),
-          P_RETAILPRICE decimal(18,4)  encode zstd,
-          P_COMMENT varchar(23)  encode zstd)
+          P_RETAILPRICE decimal(18,4),
+          P_COMMENT varchar(23))
         diststyle all;
 
         create table supplier (
-          S_SUPPKEY bigint encode zstd NOT NULL PRIMARY KEY,
-          S_NAME varchar(25)  encode zstd,
-          S_ADDRESS varchar(40)  encode zstd,
-          S_NATIONKEY bigint  encode zstd REFERENCES nation(n_nationkey),
-          S_PHONE varchar(15)  encode zstd,
-          S_ACCTBAL decimal(18,4)  encode zstd,
-          S_COMMENT varchar(101)  encode zstd)
+          S_SUPPKEY bigint NOT NULL PRIMARY KEY,
+          S_NAME varchar(25),
+          S_ADDRESS varchar(40),
+          S_NATIONKEY bigint REFERENCES nation(n_nationkey),
+          S_PHONE varchar(15),
+          S_ACCTBAL decimal(18,4),
+          S_COMMENT varchar(101))
         diststyle all;
 
-
         create table lineitem (
-          L_ORDERKEY bigint encode zstd NOT NULL REFERENCES orders(O_ORDERKEY),
-          L_PARTKEY bigint encode zstd REFERENCES part(P_PARTKEY),
-          L_SUPPKEY bigint encode zstd REFERENCES supplier(S_SUPPKEY),
-          L_LINENUMBER integer encode zstd NOT NULL,
+          L_ORDERKEY bigint NOT NULL REFERENCES orders(O_ORDERKEY),
+          L_PARTKEY bigint REFERENCES part(P_PARTKEY),
+          L_SUPPKEY bigint REFERENCES supplier(S_SUPPKEY),
+          L_LINENUMBER integer NOT NULL,
           L_QUANTITY decimal(18,4),
-          L_EXTENDEDPRICE decimal(18,4) encode zstd,
-          L_DISCOUNT decimal(18,4) encode zstd,
-          L_TAX decimal(18,4) encode zstd,
-          L_RETURNFLAG varchar(1) encode zstd,
-          L_LINESTATUS varchar(1) encode zstd,
-          L_SHIPDATE date encode zstd,
-          L_COMMITDATE date encode zstd,
-          L_RECEIPTDATE date encode zstd,
-          L_SHIPINSTRUCT varchar(25) encode zstd,
+          L_EXTENDEDPRICE decimal(18,4),
+          L_DISCOUNT decimal(18,4),
+          L_TAX decimal(18,4),
+          L_RETURNFLAG varchar(1),
+          L_LINESTATUS varchar(1),
+          L_SHIPDATE date,
+          L_COMMITDATE date,
+          L_RECEIPTDATE date,
+          L_SHIPINSTRUCT varchar(25),
           L_SHIPMODE varchar(10),
-          L_COMMENT varchar(44) encode zstd,
+          L_COMMENT varchar(44),
         PRIMARY KEY (L_ORDERKEY, L_LINENUMBER))
         distkey (L_ORDERKEY)
         sortkey (L_RECEIPTDATE);
 
         create table partsupp (
-          PS_PARTKEY bigint encode zstd NOT NULL REFERENCES part(P_PARTKEY),
-          PS_SUPPKEY bigint encode zstd NOT NULL REFERENCES supplier(S_SUPPKEY),
+          PS_PARTKEY bigint NOT NULL REFERENCES part(P_PARTKEY),
+          PS_SUPPKEY bigint NOT NULL REFERENCES supplier(S_SUPPKEY),
           PS_AVAILQTY integer,
-          PS_SUPPLYCOST decimal(18,4)  encode zstd,
-          PS_COMMENT varchar(199) encode zstd,
+          PS_SUPPLYCOST decimal(18,4),
+          PS_COMMENT varchar(199),
         PRIMARY KEY (PS_PARTKEY, PS_SUPPKEY))
         diststyle even;
   DMLRegion:
@@ -270,7 +269,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   DMLNation:
     Type: Custom::RedshiftCommand
@@ -292,7 +291,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   DMLCustomer:
     Type: Custom::RedshiftCommand
@@ -314,7 +313,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY customer FROM 's3://redshift-immersionday-labs/data/customer/customer.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY customer FROM 's3://redshift-immersionday-labs/data/customer/customer.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   DMLOrders:
     Type: Custom::RedshiftCommand
@@ -336,7 +335,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY orders FROM 's3://redshift-immersionday-labs/data/orders/orders.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY orders FROM 's3://redshift-immersionday-labs/data/orders/orders.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   DMLPart:
     Type: Custom::RedshiftCommand
@@ -358,7 +357,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY part FROM 's3://redshift-immersionday-labs/data/part/part.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY part FROM 's3://redshift-immersionday-labs/data/part/part.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   DMLSupplier:
     Type: Custom::RedshiftCommand
@@ -380,7 +379,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY supplier FROM 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY supplier FROM 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   DMLLineitem:
     Type: Custom::RedshiftCommand
@@ -402,7 +401,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY lineitem FROM 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY lineitem FROM 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   DMLPartSupp:
     Type: Custom::RedshiftCommand
@@ -424,7 +423,7 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY partsupp FROM 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE ON;
+        - COPY partsupp FROM 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
         - {Role: !Ref Role}
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
