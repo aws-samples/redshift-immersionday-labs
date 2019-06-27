@@ -35,6 +35,11 @@ Note: This cloud formation template will create a Lambda function which will tri
 * [Your-Redshift-Subnet]
 * [Your-Redshift-SecurityGroup]
 
+If you have any issues with the deployment of the CloudFormation template, determine which resource failed. If the resource was the DDL or DML operation, navigate to the Lambda Cloudwatch Logs to determine the root cause:
+```
+https://console.aws.amazon.com/cloudwatch/home?#logStream:group=/aws/lambda/RedshiftCommand
+```
+
 ## Create Tables
 Copy the following create table statements to create tables in the database.  
 ```
@@ -142,35 +147,35 @@ A COPY command loads large amounts of data much more efficiently than using INSE
 ```
 COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 
 COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 
 copy customer from 's3://redshift-immersionday-labs/data/customer/customer.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 
 copy orders from 's3://redshift-immersionday-labs/data/orders/orders.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 
 copy part from 's3://redshift-immersionday-labs/data/part/part.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 
 copy supplier from 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 
 copy lineitem from 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 
 copy partsupp from 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
 ```
 If you are using 4 dc2.large clusters nodes, the estimated time to load the data is as follows, note you can check timing information on actions in the performance and query tabs on the redshift console:
 * REGION (5 rows) - 20s
@@ -184,18 +189,16 @@ If you are using 4 dc2.large clusters nodes, the estimated time to load the data
 
 Note: A few key takeaways from the above COPY statements.
 1. COMPUPDATE PRESET ON will assign compression using the Amazon Redshift best practices related to the data type of the column but without analyzing the data in the table. 
-1. COPY for the REGION table points to a specfic file (region.tbl.lzo)
-1. COPY for other tables point to a prefix to multiple files (lineitem.tbl.)
+1. COPY for the REGION table points to a specfic file (region.tbl.lzo) while COPY for other tables point to a prefix to multiple files (lineitem.tbl.)
 1. COPY for the SUPPLIER table points a manifest file (supplier.json)
 
 ## Table Maintenance - Analyze
-You should at regular intervals, update the statistical metadata that the query planner uses to build and choose optimal plans.  You can analyze a table explicitly by running the ANALYZE command.  When you load data with the COPY command, you can perform an analysis automatically by setting the STATUPDATE option to ON.  By default, the COPY command performs an analysis after it loads data into an empty table.
+You should at regular intervals, update the statistical metadata that the query planner uses to build and choose optimal plans.  You can analyze a table explicitly by running the ANALYZE command.  When you load data with the COPY command, you can perform an analysis on incrementally loaded data automatically by setting the STATUPDATE option to ON.  When loading into an empty table, the COPY command by default performs the ANALYZE operation.
 
 Run the ANALYZE command against the CUSTOMER table.
 ```
 analyze customer;
 ```
-
 To find out when ANALYZE commands were run, you can query system tables and view such as STL_QUERY and STV_STATEMENTTEXT and include a restriction on padb_fetch_sample.  For example, to find out when the CUSTOMER table was last analyzed, run this query:
 ```
 select query, rtrim(querytxt), starttime
@@ -205,6 +208,7 @@ querytxt like 'padb_fetch_sample%' and
 querytxt like '%customer%'
 order by query desc;
 ```
+Note: Time timestamp of the ANALYZE will correlate to when the COPY command was executed and there will be no entry for the second analyze statement.  Redshift knows that it does not need to run the ANALYZE operation as no data has changed in the table.
 
 ## Table Maintenance - VACUUM
 You should run the VACUUM command following a significant number of deletes or updates.  To perform an update, Amazon Redshift deletes the original row and appends the updated row, so every update is effectively a delete and an insert.  While, Amazon Redshift recently enabled a feature which automatically and periodically reclaims space, it is a good idea to be aware of how to manually perform this operation.  You can run a full vacuum, a delete only vacuum, or sort only vacuum.
