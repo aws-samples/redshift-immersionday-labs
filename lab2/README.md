@@ -184,8 +184,8 @@ If you are using 4 dc2.large clusters nodes, the estimated time to load the data
 * ORDERS - (76M rows) - 1m
 * PART - (20M rows) - 4m
 *	SUPPLIER - (1M rows) - 1m
-* LINEITEM - (600M rows) - 4m
-*	PARTSUPPLIER - (80M rows) 45s
+* LINEITEM - (600M rows) - 13m
+*	PARTSUPPLIER - (80M rows) 3m
 
 Note: A few key takeaways from the above COPY statements.
 1. COMPUPDATE PRESET ON will assign compression using the Amazon Redshift best practices related to the data type of the column but without analyzing the data in the table. 
