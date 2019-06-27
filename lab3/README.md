@@ -17,7 +17,7 @@ This lab assumes you have launched a Redshift cluster, loaded it with TPC Benchm
 * [Your-Redshift_Username]
 * [Your-Redshift_Password]
 
-It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see [Lab 1 - Creating Redshift Clusters : Configure Client Tool][../lab1/README.md#configure-client-tool]. As an alternative you can use the Redshift provided online Query Editor which does not require an installation.
+It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see (Lab 1 - Creating Redshift Clusters : Configure Client Tool)[../lab1/README.md#configure-client-tool]. As an alternative you can use the Redshift provided online Query Editor which does not require an installation.
 ```
 https://console.aws.amazon.com/redshift/home?#query:
 ```
