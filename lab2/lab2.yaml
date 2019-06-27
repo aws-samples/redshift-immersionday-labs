@@ -28,8 +28,13 @@ Parameters:
     Description: The VPC of the Redshift cluster.
     Type: AWS::EC2::VPC::Id
   Subnet:
-    Description: Choose one of the subnets associated to your Redshift cluster.
+    Description: Choose the subnet associated to your Redshift cluster.
     Type: AWS::EC2::Subnet::Id
+  PrivateSubnetCidrBlock:
+    Description: Choose a Cidr block to associate to a new Private subnet.
+    Type: String
+    Default: '10.0.2.0/24'
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
   SecurityGroup:
     Description: Choose the security group of the Redshift cluster.
     Type: AWS::EC2::SecurityGroup::Id
@@ -55,6 +60,7 @@ Metadata:
         Parameters:
           - VPC
           - Subnet
+          - PrivateSubnetCidrBlock
           - SecurityGroup
           - Role
 Resources:
@@ -94,11 +100,9 @@ Resources:
     Type: AWS::Lambda::Function
     DependsOn:
       - LambdaLoadRedshiftRole
-      - PrivateSubnet1
-      - PrivateSubnet2
+      - PrivateSubnet
       - LambdaLoadRedshiftRole
-      - PrivateSubnetRouteTableAssociation1
-      - PrivateSubnetRouteTableAssociation2
+      - PrivateSubnetRouteTableAssociation
       - NatGateway
       - PrivateRoute
       - LambdaLoadRedshiftRole
@@ -113,8 +117,7 @@ Resources:
           SecurityGroupIds :
             - Ref: SecurityGroup
           SubnetIds :
-            - Ref: PrivateSubnet1
-            - Ref: PrivateSubnet2
+            - Ref: PrivateSubnet
         MemorySize: 128
         Role:
           Fn::GetAtt: [LambdaLoadRedshiftRole,Arn]
@@ -129,8 +132,7 @@ Resources:
       PrivateDnsEnabled: false
       VpcEndpointType: Interface
       SubnetIds:
-        - Ref: PrivateSubnet1
-        - Ref: PrivateSubnet2
+        - Ref: PrivateSubnet
       SecurityGroupIds:
         - Ref: SecurityGroup
   DDL:
@@ -152,14 +154,14 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: |-
-        DROP TABLE IF EXISTS partsupp;
-        DROP TABLE IF EXISTS lineitem;
-        DROP TABLE IF EXISTS supplier;
-        DROP TABLE IF EXISTS part;
-        DROP TABLE IF EXISTS orders;
-        DROP TABLE IF EXISTS customer;
-        DROP TABLE IF EXISTS nation;
-        DROP TABLE IF EXISTS region;
+        DROP TABLE IF EXISTS partsupp CASCADE;
+        DROP TABLE IF EXISTS lineitem CASCADE;
+        DROP TABLE IF EXISTS supplier CASCADE;
+        DROP TABLE IF EXISTS part CASCADE;
+        DROP TABLE IF EXISTS orders CASCADE;
+        DROP TABLE IF EXISTS customer CASCADE;
+        DROP TABLE IF EXISTS nation CASCADE;
+        DROP TABLE IF EXISTS region CASCADE;
 
         CREATE TABLE region (
           R_REGIONKEY bigint NOT NULL PRIMARY KEY,
@@ -269,12 +271,13 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY region FROM 's3://redshift-immersionday-labs/data/region/region.tbl.lzo' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
   DMLNation:
     Type: Custom::RedshiftCommand
     DependsOn:
       - DDL
+      - DMLRegion
       - LambdaLoadRedshiftCommand
       - CloudwatchVPCEndpoint
     Properties:
@@ -291,12 +294,13 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY nation FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
   DMLCustomer:
     Type: Custom::RedshiftCommand
     DependsOn:
       - DDL
+      - DMLNation
       - LambdaLoadRedshiftCommand
       - CloudwatchVPCEndpoint
     Properties:
@@ -313,12 +317,13 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY customer FROM 's3://redshift-immersionday-labs/data/customer/customer.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY customer FROM 's3://redshift-immersionday-labs/data/customer/customer.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
   DMLOrders:
     Type: Custom::RedshiftCommand
     DependsOn:
       - DDL
+      - DMLCustomer
       - LambdaLoadRedshiftCommand
       - CloudwatchVPCEndpoint
     Properties:
@@ -335,12 +340,13 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY orders FROM 's3://redshift-immersionday-labs/data/orders/orders.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY orders FROM 's3://redshift-immersionday-labs/data/orders/orders.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
   DMLPart:
     Type: Custom::RedshiftCommand
     DependsOn:
       - DDL
+      - DMLOrders
       - LambdaLoadRedshiftCommand
       - CloudwatchVPCEndpoint
     Properties:
@@ -357,12 +363,13 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY part FROM 's3://redshift-immersionday-labs/data/part/part.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY part FROM 's3://redshift-immersionday-labs/data/part/part.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
   DMLSupplier:
     Type: Custom::RedshiftCommand
     DependsOn:
       - DDL
+      - DMLPart
       - LambdaLoadRedshiftCommand
       - CloudwatchVPCEndpoint
     Properties:
@@ -379,12 +386,13 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY supplier FROM 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY supplier FROM 's3://redshift-immersionday-labs/data/supplier/supplier.json' manifest iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
   DMLLineitem:
     Type: Custom::RedshiftCommand
     DependsOn:
       - DDL
+      - DMLSupplier
       - LambdaLoadRedshiftCommand
       - CloudwatchVPCEndpoint
     Properties:
@@ -401,12 +409,13 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY lineitem FROM 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY lineitem FROM 's3://redshift-immersionday-labs/data/lineitem/lineitem.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
   DMLPartSupp:
     Type: Custom::RedshiftCommand
     DependsOn:
       - DDL
+      - DMLLineitem
       - LambdaLoadRedshiftCommand
       - CloudwatchVPCEndpoint
     Properties:
@@ -423,20 +432,14 @@ Resources:
       Port:
         Ref: PortNumber
       SQLCommand: !Sub
-        - COPY partsupp FROM 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET ON;
+        - COPY partsupp FROM 's3://redshift-immersionday-labs/data/partsupp/partsupp.tbl.' iam_role 'arn:aws:iam::${AWS::AccountId}:role/${Role}' region 'us-west-2' lzop delimiter '|' COMPUPDATE PRESET;
         - {Role: !Ref Role}
-  PrivateSubnet1:
+  PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      CidrBlock: 10.0.2.0/24
+      CidrBlock:
+        Ref: PrivateSubnetCidrBlock
       AvailabilityZone: !Select [0, !GetAZs ""]
-      VpcId:
-        Ref: VPC
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      CidrBlock: 10.0.3.0/24
-      AvailabilityZone: !Select [1, !GetAZs ""]
       VpcId:
         Ref: VPC
   PrivateRouteTable:
@@ -449,24 +452,14 @@ Resources:
     Properties:
       Domain:
         Ref: VPC
-  PrivateSubnetRouteTableAssociation1:
+  PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     DependsOn:
-      - PrivateSubnet1
+      - PrivateSubnet
       - PrivateRouteTable
     Properties:
       SubnetId:
-        Ref: PrivateSubnet1
-      RouteTableId:
-        Ref: PrivateRouteTable
-  PrivateSubnetRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    DependsOn:
-      - PrivateSubnet2
-      - PrivateRouteTable
-    Properties:
-      SubnetId:
-        Ref: PrivateSubnet2
+        Ref: PrivateSubnet
       RouteTableId:
         Ref: PrivateRouteTable
   SecurityGroupIngress:
