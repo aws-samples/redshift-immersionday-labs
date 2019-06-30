@@ -30,14 +30,9 @@ https://console.aws.amazon.com/redshift/home?#query:
 To *skip this lab* and complete the loading of this sample data using cloud formation, use the following link.
 [![Launch](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=ImmersionLab2&templateURL=https://s3-us-west-2.amazonaws.com/redshift-immersionday-labs/lab2.yaml)
 
-Note: This cloud formation template will create a Lambda function which will trigger each of the data loads.  In order to trigger these loads securely, the Lambda function will be deployed to the same VPC as the Redshift cluster in a new set of Private Subnets with a NAT Gateway allowing the function to communicate to the Redshift Cluster.  In order to create this stack, you will need to gather the following information in addition to the items above.
-* [Your-Redshift-VPC]
-* [Your-Redshift-Subnet]
-* [Your-Redshift-SecurityGroup]
-
-If you have any issues with the deployment of the CloudFormation template, determine which resource failed. If the resource was the DDL or DML operation, navigate to the Lambda Cloudwatch Logs to determine the root cause:
+Note: This cloud formation template will create a Lambda function which will trigger a Glue Python Shell script.  The Glue script assumes that the Redshift Cluster is publically accessible with an ingress rule of 0.0.0.0/0.  If you have any issues with the deployment of the CloudFormation template, determine which resource failed. If the resource was in the load operation, navigate to the Cloudwatch Logs to determine the root cause:
 ```
-https://console.aws.amazon.com/cloudwatch/home?#logStream:group=/aws/lambda/RedshiftCommand
+https://console.aws.amazon.com/cloudwatch/home?#logStream:group=/aws-glue/python-jobs/output
 ```
 
 ## Create Tables
