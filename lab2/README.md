@@ -30,7 +30,7 @@ https://console.aws.amazon.com/redshift/home?#query:
 To *skip this lab* and complete the loading of this sample data using cloud formation, use the following link.
 [![Launch](../images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=ImmersionLab2&templateURL=https://s3-us-west-2.amazonaws.com/redshift-immersionday-labs/lab2.yaml)
 
-Note: This cloud formation template will create a Lambda function which will trigger a Glue Python Shell script.  The Glue script assumes that the Redshift Cluster is publically accessible with an ingress rule of 0.0.0.0/0.  If you have any issues with the deployment of the CloudFormation template, determine which resource failed. If the resource was in the load operation, navigate to the Cloudwatch Logs to determine the root cause:
+Note: This cloud formation template will create a Lambda function which will trigger an asynchronous Glue Python Shell script.  The Glue script assumes that the Redshift Cluster is publically accessible with an ingress rule of 0.0.0.0/0.  To monitor the load process and diagnose any load errors, see the following Cloudwatch Logs stream:
 ```
 https://console.aws.amazon.com/cloudwatch/home?#logStream:group=/aws-glue/python-jobs/output
 ```
