@@ -161,6 +161,7 @@ order by query,segment;
 ```
 
 The query should return results similar to the following:
+
 |elapsed|s3_scanned_rows|s3_scanned_bytes|s3query_returned_rows|s3query_returned_bytes|files|avg_request_parallelism|
 |---|---|---|---|---|---|---|
 |209773697|3758774345|6.61358E+11|66270117|1060321872|5040|9.77|
