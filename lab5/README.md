@@ -20,6 +20,7 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-Redshift_Password]
 * [Your-Redshift_Role]
 * [Your-AWS-Account_Id]
+* [Your-Glue_Role]
 
 It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see [Lab 1 - Creating Redshift Clusters : Configure Client Tool](../lab1/README.md#configure-client-tool). As an alternative you can use the Redshift provided online Query Editor which does not require an installation.
 ```
@@ -86,7 +87,7 @@ iam_role 'arn:aws:iam::[Your-Aws-Account-Id]:role/[Your-Redshift_Role]'
 CREATE EXTERNAL DATABASE IF NOT EXISTS;
 ```
 
-* Use the AWS Glue Crawler to create your external table clickstream.clickstream-csv10 and clickstream.clickstream-parquet1  under locations s3://redshift-spectrum-bigdata-blog-datasets/clickstream-csv10 and s3://redshift-spectrum-bigdata-blog-datasets/clickstream-parquet1 respectively.
+4. Use the AWS Glue Crawler to create your external table clickstream.clickstream-csv10 and clickstream.clickstream-parquet1  under locations s3://redshift-spectrum-bigdata-blog-datasets/clickstream-csv10 and s3://redshift-spectrum-bigdata-blog-datasets/clickstream-parquet1 respectively.
 
 	1. Navigate to the **Glue Crawler Page**. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers
 	![](../images/crawler_0.png)
@@ -96,11 +97,11 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 	![](../images/crawler_2.png)
 	1. Choose *S3* as the data store and the include path of *s3://redshift-immersionday-labs/data/clickstream*
 	![](../images/crawler_3_clickstream.png)
-	1. *Choose an existing IAM Role* and select [Your-Glue_Role].  If you don't have a Glue Role, you can also select *Create an IAM role* and enter *clickstream* for the Role name.
+	1. *Choose an existing IAM Role* and select a Role which Glue can assume and which has access to S3.  If you don't have a Glue Role, you can also select *Create an IAM role*.
 	![](../images/crawler_4_clickstream.png)
 	1. Select *Run on demand* for the frequency.
 	![](../images/crawler_5.png)
-	1. Click on *Add database* and enter the Database of *clickstream*
+	1. Select the Database *clickstream* from the list.
 	![](../images/crawler_6_clickstream.png)
 	1. Select all remaining defaults. Once the Crawler has been created, click on *Run Crawler*.
 	![](../images/crawler_7_clickstream.png)
@@ -113,9 +114,6 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 	1. Click on *Edit Schema* and enter the column names as follows and click *Save*.
 	![](../images/crawler_11_clickstream.png)
 	
-
-
-
 
 ## Before You Leave
 If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources.
