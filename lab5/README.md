@@ -166,7 +166,7 @@ The query should return results similar to the following:
 |---|---|---|---|---|---|---|
 |209773697|3758774345|6.61358E+11|66270117|1060321872|5040|9.77|
 
-The diagnostics reveal why our query took so long. For instance, “s3_scanned_row” reveals that the query scans nearly 3.8B records, which is the entire data set. 
+The diagnostics reveal why our query took so long. For instance, *s3_scanned_row* reveals that the query scans nearly 3.8B records, which is the entire data set. 
 
 2. Run the same Redshift Spectrum query again, but with EXPLAIN
 ```sql
@@ -273,7 +273,7 @@ You should observe the following results:
 |113561847|1898739653|3.34084E+11|66270117|795241404|2520|9.71|
 
 
-Note that “s3_scanned_rows” reveals that the rows scanned has been halved when compared with the previous query. This explains why our query ran roughly twice as fast.
+Note that *s3_scanned_rows* reveals that the rows scanned has been halved when compared with the previous query. This explains why our query ran roughly twice as fast.
 
 The results are due to the fact that our data is evenly distributed across all customers, and by querying 3 of 6 customers with our customer partition key, the database engine is able to intelligently scan the subset of data containing customers 1,2 and 3 instead of the entire data set. However, the scan is still very inefficient, and we can benefit from utilizing our year/month partition key as well.
 
@@ -308,6 +308,148 @@ Upon reviewing the statistics for this query, you should observe that Redshift S
 |---|---|---|---|---|---|---|
 |7124877|66270117|11660676734|66270117|795241404|90|5.87
 
+## Storage Optimizations
+Redshift Spectrum performs processing through large-scale infrastructure external to your Redshift cluster. It is optimized for performing large scans and aggregations on S3; in fact, with the proper optimizations, Redshift Spectrum may even out-perform a small to medium size Redshift cluster on these types of workloads. There are two important variables to consider for optimizing large scans and aggregations:
+* **File size and count** - As a general rule, use files sizes between 50-500MB for non-splittable files, this is optimal for Redshift Spectrum. However, the number of files operating on a query is directly correlated with the parallelism achievable by a query. There is an inverse relationship between file size and count: the bigger the files, the fewer files there are for the same dataset. Consequently, there is a trade-off between optimizing for object read performance, and the amount of parallelism achievable on a particular query. Large files are best for large scans as the query likely operates on sufficiently large number of files. For queries that are more selective and for which fewer files are operating, you may find that smaller files allow for more parallelism.
+* **Data format** Redshift Spectrum supports various data formats. Columnar formats like Parquet can sometimes lead to substantial performance benefits by providing compression and more efficient I/O for certain workloads. Generally, format types like Parquet should be used for query workloads involving large scans, and high attribute selectivity. Again, there are trade-offs as formats like Parquet require more compute power to process than plaintext. For queries on smaller subsets of data, the I/O efficiency benefit of Parquet is diminished. At some point, Parquet may perform the same or slower than plaintext. Latency, compression rates, and the trade-off between user experience and cost should drive your decision. In most cases, formats like Parquet is optimal.
+
+To help illustrate how Spectrum performs on these large aggregation workloads, let’s consider a basic query that aggregates the entire 3.7B+ record dataset on Redshift Spectrum, and compared that with running the query exclusively on Redshift: 
+```sql
+SELECT uv.custKey, COUNT(uv.custKey)
+FROM <your clickstream table> as uv
+GROUP BY uv.custKey
+ORDER BY uv.custKey ASC
+```
+
+In the interest of time, we won’t go through this exercise in the lab; nonetheless, it is helpful to understand the results of running this test.
+
+For the Redshift-only test case, the clickstream data is loaded, and distributed evenly across all nodes (even distribution style) with optimal column compression encodings prescribed by Redshift’s ANALYZE command. 
+
+The Redshift Spectrum test case utilizes a Parquet data format with one file containing all the data for a particular customer in a month; this results in files mostly in the range of 220-280MB, and in effect, is the largest file size for this partitioning scheme. If you run tests with the other datasets provided, you will see that this data format and size is optimal and will out-perform others by 60X+.
+
+Take heed that the presented quantifications shouldn’t be applied generically as performance differences will vary depending on scenario. Instead take note of the testing strategy, the evidence, and the characteristics of the workload where Spectrum is likely to yield performance benefits.
+
+**Chart 1** below compares the query execution time for the two scenarios. The results indicate that you will need to pay for 12 X DC1.Large nodes to get performance comparable to using Spectrum with the support of a small Redshift cluster in this particular scenario.  Also, note that the performance for Spectrum plateaus in the chart above. If the query involved aggregating data from more files, we would see a continued linear improvement in performance as well.
+![](../images/SpectrumAggCompare.png)
+
+## Predicate Pushdown
+
+In the last section, we learned that Spectrum excels at performing large aggregations. In this section, we’ll experiment the results of pushing more work down to Redshift Spectrum.
+
+1. Run the following query. After running this query a few times, you should observe execution times in the range of 4 seconds.
+```sql
+SELECT c.c_name, c.c_mktsegment, t.prettyMonthYear, uv.totalRevenue
+FROM (
+  SELECT customer, visitYearMonth, SUM(adRevenue) as totalRevenue 
+  FROM clickstream.uservisits_parquet1
+  WHERE customer <= 3 and visitYearMonth >= 199810
+  GROUP BY  customer, visitYearMonth) as uv
+RIGHT OUTER JOIN customer as c ON c.c_custkey = uv.customer
+INNER JOIN (
+  SELECT DISTINCT d_yearmonthnum, (d_month||','||d_year) as prettyMonthYear 
+  FROM dwdate WHERE d_yearmonthnum >= 199810) as t ON uv.visitYearMonth = t.d_yearmonthnum)
+ORDER BY c.c_name, c.c_mktsegment, uv.visitYearMonth ASC;
+```
+
+This query improves on our previous one in a couple of ways. 
+
+* We are querying the clickstream.uservisits_parquet1 table instead of clickstream.uservisits_csv10. These two tables contain the same data set, but they have been processed in different ways. The table clickstream.uservisits_parquet1 contains data in parquet format. Parquet is a columnar format, and yields I/O benefits for analytical workloads by providing compression and efficient retrieval of the attributes that are selected by the queries. Furthermore, the “1” vs “10” suffix indicates that all the data for each partition is stored in a single file instead of ten files like the CSV data set. The latter case has less overhead involved in processing large scans and aggregations.
+
+* The aggregation work has been pushed down to Redshift Spectrum. When we analyzed the query plan previously, we observed that Spectrum is used for scanning. When you analyze the above query, you will see that aggregations are also performed at the Spectrum layer.
+
+2. Re-run the SVL_S3QUERY_SUMMARY query:
+```sql
+select elapsed, s3_scanned_rows, s3_scanned_bytes, 
+  s3query_returned_rows, s3query_returned_bytes, files, avg_request_parallelism 
+from svl_s3query_summary 
+where query = pg_last_query_id() 
+order by query,segment;
+```
+
+You obtain the following results:
+
+|elapsed|s3_scanned_rows|s3_scanned_bytes|s3query_returned_rows|s3query_returned_bytes|files|avg_request_parallelism|
+|---|---|---|---|---|---|---|
+|1990509|66270117|531159030|9|72|9|0.88|
+
+The statistics reveal the source of some of the performance improvements:
+
+* The bytes scanned is reduced even though the same number of rows are scanned as a result of compression.
+* The number of rows returned is reduced to 9 from ~66.3M. This results in only 72 bytes returned from the Spectrum layer versus 795MBs. This is the result of pushing the aggregation down to the Spectrum layer. Our data is stored at the day-level granularity, and our query rolls that up to the month-level. By pushing the aggregation down to the Spectrum fleet, we only need to return 9 records that aggregate ad revenue up to the month level so that they can be joined with the required dimension attributes.
+
+3. Run the query again with EXPLAIN:
+
+The query plan should include an *S3 Aggregate* step, which indicates that the Spectrum layer offloads the aggregation processing for this query.
+
+```
+QUERY PLAN
+XN Merge  (cost=1000094008880.16..1000094008880.18 rows=7 width=78)
+  Merge Key: c.c_name, c.c_mktsegment, uv.visityearmonth
+  ->  XN Network  (cost=1000094008880.16..1000094008880.18 rows=7 width=78)
+        Send to leader
+        ->  XN Sort  (cost=1000094008880.16..1000094008880.18 rows=7 width=78)
+              Sort Key: c.c_name, c.c_mktsegment, uv.visityearmonth
+              ->  XN Hash Join DS_DIST_ALL_NONE  (cost=94008878.97..94008880.06 rows=7 width=78)
+                    Hash Cond: ("outer".customer = "inner".c_custkey)
+                    ->  XN Hash Join DS_DIST_ALL_NONE  (cost=93971378.97..93971379.61 rows=7 width=48)
+                          Hash Cond: ("outer".visityearmonth = "inner".d_yearmonthnum)
+                          ->  XN Subquery Scan uv  (cost=93971346.13..93971346.42 rows=23 width=16)
+                                ->  XN HashAggregate  (cost=93971346.13..93971346.19 rows=23 width=16)
+                                      ->  XN Partition Loop  (cost=93969358.63..93970506.13 rows=112000 width=16)
+                                            ->  XN Seq Scan PartitionInfo of clickstream.uservisits_parquet1  (cost=0.00..17.50 rows=112 width=8)
+                                                  Filter: ((customer <= 3) AND (visityearmonth >= 199810) AND (visityearmonth >= 199810))
+                                            ->  XN S3 Query Scan uservisits_parquet1  (cost=46984679.32..46984689.32 rows=1000 width=8)
+                                                  ->  S3 Aggregate  (cost=46984679.32..46984679.32 rows=1000 width=8)
+                                                        ->  S3 Seq Scan clickstream.uservisits_parquet1 location:"s3://redshift-spectrum-datastore-parquet1" format:PARQUET  (cost=0.00..37587743.45 rows=3758774345 width=8)
+                          ->  XN Hash  (cost=32.82..32.82 rows=7 width=36)
+                                ->  XN Subquery Scan t  (cost=0.00..32.82 rows=7 width=36)
+                                      ->  XN Unique  (cost=0.00..32.75 rows=7 width=18)
+                                            ->  XN Seq Scan on dwdate  (cost=0.00..32.43 rows=64 width=18)
+                                                  Filter: (d_yearmonthnum >= 199810)
+                    ->  XN Hash  (cost=30000.00..30000.00 rows=3000000 width=38)
+                          ->  XN Seq Scan on customer c  (cost=0.00..30000.00 rows=3000000 width=38)
+```
+
+## Native Redshift versus Redshift with Spectrum
+At this point, you might be asking yourself, why would I ever not use Spectrum? Well, you still get additional value from loading data into Redshift. In fact, it turns out that our last query runs even faster when executed exclusively in native Redshift. Running a full test is beyond the time we have for the lab, so let’s review test results that compares running the last query with Redshift Spectrum versus exclusively with Redshift on various cluster sizes.
+
+As a rule of thumb, queries that aren’t dominated by I/O and involve multiple joins are better optimized in native Redshift.  Furthermore, the variability in latency in native Redshift is significantly lower. For use cases where you have tight performance SLAs on queries, you may want to consider using Redshift exclusively to support those queries.
+
+On the other hand, when you have the need to perform large scans, you could benefit from the best of both worlds: higher performance at lower cost. For instance, imagine we needed to enable our business analysts to interactively discover insights across a vast amount of historical data. 
+
+1. Instead of running our previous query on 3 months of data, let’s perform the analysis on 7-years. Unlike our previous queries, the time range filter starts at January, 1992 instead of October, 1998. This query should run in under 10 seconds after it is executed a few times.
+```sql
+SELECT c.c_name, c.c_mktsegment, t.prettyMonthYear, uv.totalRevenue
+FROM (
+  SELECT customer, visitYearMonth, SUM(adRevenue) as totalRevenue
+  FROM clickstream.uservisits_parquet1
+  WHERE customer <= 3 and visitYearMonth >= 199201
+  GROUP BY  customer, visitYearMonth) as uv
+RIGHT OUTER JOIN customer as c ON c.c_custkey = uv.customer
+INNER JOIN (
+  SELECT DISTINCT d_yearmonthnum, (d_month||','||d_year) as prettyMonthYear 
+  FROM dwdate 
+  WHERE d_yearmonthnum >= 199201) as t
+ON uv.visitYearMonth = t.d_yearmonthnum)
+ORDER BY c.c_name, c.c_mktsegment, uv.visitYearMonth ASC;
+```
+
+2. Inspect the SVL_S3QUERY_SUMMARY again by running the query:
+```sql
+select elapsed, s3_scanned_rows, s3_scanned_bytes, 
+  s3query_returned_rows, s3query_returned_bytes, files, avg_request_parallelism 
+from svl_s3query_summary 
+where query = pg_last_query_id() 
+order by query,segment;
+```
+
+You should observe the results below. Note that this query scans nearly 1.9B records, which is half the data set to aggregate data across 7-years. 
+
+|elapsed|s3_scanned_rows|s3_scanned_bytes|s3query_returned_rows|s3query_returned_bytes|files|avg_request_parallelism|
+|---|---|---|---|---|---|---|
+|9005338|1898739653|15217906256|252|2016|252|8.15|
+
+This is a lot of data to process, yet the query runs in under 10 seconds. This is substantially faster that the queries we ran at the start of the lab, which queried the same result set. The difference in performance is a result of the improvements we made to the data format, size and pushing the aggregation work down to the Spectrum layer.
 
 ## Before You Leave
 If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources.
