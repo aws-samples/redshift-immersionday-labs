@@ -9,7 +9,7 @@ In this lab, we show you how to diagnose your Redshift Spectrum query performanc
 * [Optimizing with Partitions](#optimizing-with-partitions)
 * [Storage Optimizations](#storage-optimizations)
 * [Predicate Pushdown](#predicate-pushdown)
-* [Native Redshift versus Redshift with Spectrum](#native-versus-Redshift-with-Spectrum)
+* [Native Redshift versus Redshift with Spectrum](#native-redshift-versus-redshift-with-spectrum)
 * [Before You Leave](#before-you-leave)
 
 ## Before You Begin
