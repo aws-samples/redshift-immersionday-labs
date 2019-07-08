@@ -110,6 +110,7 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 	1. Click on the *uservisits_parquet1* table, notice the recordCount of 2.87 billion. 
 	![](../images/crawler_9_clickstream.png)
 	1. Navigate back to the Glue Catalog and click on the *uservisits_csv* table, notice the column names have not been set. 
+	
 	![](../images/crawler_10_clickstream.png)
 	1. Click on *Edit Schema* and enter the column names as follows and click *Save*. 
 	![](../images/crawler_11_clickstream.png)
