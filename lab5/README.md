@@ -217,7 +217,8 @@ The takeaway is that the query plan reveals how Redshift Spectrum is leverage in
 ->  S3 Seq Scan clickstream.uservisits_csv10 uv location:"s3://redshift-spectrum-datastore-csv10" format:TEXT  (cost=0.00..56381615.17 rows=3758774345 width=16)
 ```
 
-## Optimizing Perforamnce with Partitions
+## Optimizing with Partitions
+
 In this section, you will learn about partitions, and how they can be used to improve the performance of your Redshift Spectrum queries.  Partitioning is a key means to improving scan efficiency. Previously, we ran the glue crawler which created our external tables along with partitions. Navigate back to the Glue Catalog https://console.aws.amazon.com/glue/home?#catalog:tab=tables.  Click on the *uservisits_csv10* table. The columns *customer* and *visityearmonth* are set as the partition keys.
 
 ![](../images/crawler_11_clickstream.png)
@@ -411,6 +412,7 @@ XN Merge  (cost=1000094008880.16..1000094008880.18 rows=7 width=78)
 ```
 
 ## Native Redshift versus Redshift with Spectrum
+
 At this point, you might be asking yourself, why would I ever not use Spectrum? Well, you still get additional value from loading data into Redshift. In fact, it turns out that our last query runs even faster when executed exclusively in native Redshift. Running a full test is beyond the time we have for the lab, so let’s review test results that compares running the last query with Redshift Spectrum versus exclusively with Redshift on various cluster sizes.
 
 As a rule of thumb, queries that aren’t dominated by I/O and involve multiple joins are better optimized in native Redshift.  Furthermore, the variability in latency in native Redshift is significantly lower. For use cases where you have tight performance SLAs on queries, you may want to consider using Redshift exclusively to support those queries.
