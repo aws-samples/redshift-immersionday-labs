@@ -330,8 +330,13 @@ The Redshift Spectrum test case utilizes a Parquet data format with one file con
 
 Take heed that the presented quantifications shouldn’t be applied generically as performance differences will vary depending on scenario. Instead take note of the testing strategy, the evidence, and the characteristics of the workload where Spectrum is likely to yield performance benefits.
 
-**Chart 1** below compares the query execution time for the two scenarios. The results indicate that you will need to pay for 12 X DC1.Large nodes to get performance comparable to using Spectrum with the support of a small Redshift cluster in this particular scenario.  Also, note that the performance for Spectrum plateaus in the chart above. If the query involved aggregating data from more files, we would see a continued linear improvement in performance as well.
-![](../images/SpectrumAggCompare.png)
+The chart below compares the query execution time for the two scenarios. The results indicate that you will need to pay for 12 X DC1.Large nodes to get performance comparable to using Spectrum with the support of a small Redshift cluster in this particular scenario.  Also, note that the performance for Spectrum plateaus in the chart above. If the query involved aggregating data from more files, we would see a continued linear improvement in performance as well.
+
+<p align="center">
+  <b>Chart 1: Native Redshift vs. Spectrum Agg Performance by Node Count</b>
+  <img width="460" height="300" src="../images/SpectrumAggCompare.png">
+</p>
+
 
 ## Predicate Pushdown
 
