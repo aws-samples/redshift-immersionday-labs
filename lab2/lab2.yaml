@@ -1,0 +1,156 @@
+
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  DatabaseHostName:
+    Description: The hostname name of the cluster endpoint.
+    Type: String
+    Default: <cluster>.<region>.redshift.amazonaws.com
+  DatabaseName:
+    Description: The name of the database to use to load the data.
+    Type: String
+    Default: dev
+    AllowedPattern: "([a-z]|[0-9])+"
+  MasterUsername:
+    Description: The user name to use to load the data.  User must have create/drop/insert privileges.
+    Type: String
+    Default: awsuser
+    AllowedPattern: "([a-z])([a-z]|[0-9])*"
+  MasterUserPassword:
+    Description: The password to use to load the data.
+    Type: String
+    Default: Awsuser123
+    NoEcho: 'true'
+  PortNumber:
+    Description: The port number on which the cluster accepts incoming connections.
+    Type: Number
+    Default: '5439'
+  Role:
+    Type: String
+    Description: Enter the role associated to the Redshift cluster and which has S3 Read Access.
+    Default: RedshiftImmersionRole
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Redshift Connection Parameters"
+        Parameters:
+          - DatabaseHostName
+          - PortNumber
+          - MasterUsername
+          - MasterUserPassword
+          - DatabaseName
+          - Role
+Resources:
+  GlueLoadRedshiftRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - glue.amazonaws.com
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+      Path: /
+      Policies:
+          -
+            PolicyName: LambdaLoadRedshiftPolicy
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                -
+                  Effect: Allow
+                  Action:
+                    - s3:*
+                  Resource:
+                    - !Sub "arn:aws:s3:::cloudformation-custom-resource-response-${AWS::Region}"
+                    - !Sub "arn:aws:s3:::cloudformation-waitcondition-${AWS::Region}"
+                    - !Sub "arn:aws:s3:::cloudformation-custom-resource-response-${AWS::Region}/*"
+                    - !Sub "arn:aws:s3:::cloudformation-waitcondition-${AWS::Region}/*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+  GlueLoadRedshiftCommand:
+    Type: AWS::Glue::Job
+    Properties:
+      Command:
+        Name: pythonshell
+        ScriptLocation: "s3://redshift-immersionday-labs/RedshiftCommand.py"
+      Name: RedshiftCommand
+      Role: !GetAtt 'GlueLoadRedshiftRole.Arn'
+  LambdaGlueLoadRedshiftCommand:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      FunctionName: TriggerGlueLoadRedshiftCommand
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          import logging
+
+          logging.basicConfig()
+          logger = logging.getLogger(__name__)
+          logger.setLevel(logging.INFO)
+
+          glue = boto3.client('glue')
+
+          def handler(event, context):
+            logger.info(json.dumps(event))
+            if event['RequestType'] != 'Create':
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, {'Data': 'NA'})
+            else:
+                try:
+                  userName = event['ResourceProperties']['userName']
+                  userPassword = event['ResourceProperties']['userPassword']
+                  database = event['ResourceProperties']['database']
+                  hostName = event['ResourceProperties']['hostName']
+                  sqlScript = event['ResourceProperties']['sqlScript']
+                  port = event['ResourceProperties']['port']
+                  role = event['ResourceProperties']['role']
+
+                  response = glue.start_job_run(
+                    JobName='RedshiftCommand',
+                    Arguments={
+                      '--UserName':userName,
+                      '--UserPassword':userPassword,
+                      '--Database':database,
+                      '--HostName':hostName,
+                      '--SQLScript':sqlScript,
+                      '--Port':port,
+                      '--Role':role})
+
+                  message = 'Glue triggered successfully.'
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {'Data': message})
+
+                except Exception as e:
+                  message = 'Glue Job Issue: ' + e.message
+                  logger.info(message)
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Data': message})
+      Handler: index.handler
+      Role: !GetAtt 'GlueLoadRedshiftRole.Arn'
+      Runtime: python2.7
+    DependsOn:
+      - GlueLoadRedshiftCommand
+  InitGlueLoadRedshiftCommand:
+    Type: Custom::InitDMS
+    DependsOn:
+      - LambdaGlueLoadRedshiftCommand
+    Properties:
+      ServiceToken: !GetAtt 'LambdaGlueLoadRedshiftCommand.Arn'
+      userName: !Ref MasterUsername
+      userPassword: !Ref MasterUserPassword
+      database: !Ref DatabaseName
+      hostName: !Ref DatabaseHostName
+      port: !Ref PortNumber
+      sqlScript: 's3://redshift-immersionday-labs/lab2.sql'
+      role: !Sub
+        - arn:aws:iam::${AWS::AccountId}:role/${Role}
+        - {Role: !Ref Role}
