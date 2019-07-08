@@ -18,7 +18,6 @@ This lab assumes you have launched a Redshift cluster, and can gather the follow
 * [Your-Redshift_Password]
 * [Your-Redshift_Role]
 * [Your-AWS-Account_Id]
-* [Your-Glue_Role]
 
 It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see [Lab 1 - Creating Redshift Clusters : Configure Client Tool](../lab1/README.md#configure-client-tool). As an alternative you can use the Redshift provided online Query Editor which does not require an installation.
 ```
@@ -170,7 +169,7 @@ Because external tables are stored in a shared Glue Catalog for use within the A
 	![](../images/crawler_2.png)
 	1. Choose *S3* as the data store and the include path of *s3://us-west-2.serverless-analytics/canonical/NY-Pub*
 	![](../images/crawler_3.png)
-	1. *Choose an existing IAM Role* and select [Your-Glue_Role].
+	1. *Choose an existing IAM Role* and select a Role which Glue can assume and which has access to S3. If you don't have a Glue Role, you can also select *Create an IAM role*.
 	![](../images/crawler_4.png)
 	1. Select *Run on demand* for the frequency.
 	![](../images/crawler_5.png)
