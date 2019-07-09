@@ -109,9 +109,9 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 	![](../images/crawler_8_clickstream.png)
 	1. Click on the *uservisits_parquet1* table. Notice the recordCount of 3.8 billion. 
 	![](../images/crawler_9_clickstream.png)
-	1. Navigate back to the Glue Catalog https://console.aws.amazon.com/glue/home?#catalog:tab=tables.  Click on the *uservisits_csv* table. Notice the column names have not been set. 
+	1. Navigate back to the Glue Catalog https://console.aws.amazon.com/glue/home?#catalog:tab=tables.  Click on the *uservisits_csv10* table. Notice the column names have not been set. Also notice that field *col0* is set to a datatype of *String*.  This field represents *adRevenue* and should be set as a datatype of double.  
 	![](../images/crawler_10_clickstream.png)
-	1. Click on *Edit Schema* and enter the column names as follows and click *Save*. 
+	1. Click on *Edit Schema* and enter the column names as follows and adjust the datatype for the adRevenue column. Click *Save*. 
 	![](../images/crawler_11_clickstream.png)
 
 5. Navigate back to your SQL Client tool and run the query below. This query performs a join between dimension tables in Redshift, and the clickstream fact table in S3 effectively blending data from the data Lake and data warehouse. This query returns the total ad revenue in the last 3 months of our dataset by market segment for customers 1 to 3. The ad revenue data originates from S3 while the customer and time attributes like market segment originate from the dimension tables in Redshift.
