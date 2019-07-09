@@ -107,7 +107,7 @@ CREATE EXTERNAL DATABASE IF NOT EXISTS;
 	![](../images/crawler_7_clickstream.png)
 	1. Once the Crawler has completed its run, you will see two new tables in the Glue Catalog. https://console.aws.amazon.com/glue/home?#catalog:tab=tables 
 	![](../images/crawler_8_clickstream.png)
-	1. Click on the *uservisits_parquet1* table. Notice the recordCount of 2.87 billion. 
+	1. Click on the *uservisits_parquet1* table. Notice the recordCount of 3.8 billion. 
 	![](../images/crawler_9_clickstream.png)
 	1. Navigate back to the Glue Catalog https://console.aws.amazon.com/glue/home?#catalog:tab=tables.  Click on the *uservisits_csv* table. Notice the column names have not been set. 
 	![](../images/crawler_10_clickstream.png)
@@ -129,7 +129,7 @@ GROUP BY c.c_name, c.c_mktsegment, t.prettyMonthYear, uv.yearMonthKey
 ORDER BY c.c_name, c.c_mktsegment, uv.yearMonthKey  ASC
 ```
 
-Expect this query to take a few minutes to complete as nearly 3.8B records will be accessed. The results of the query should be as follows:
+Expect this query to take a few minutes to complete as nearly 3.8 billion records will be accessed. The results of the query should be as follows:
 
 |c_name|c_mktsegment|Prettymonthyear|totalrevenue|
 |---|---|---|---|
