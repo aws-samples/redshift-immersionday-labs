@@ -11,6 +11,7 @@ install_path = os.environ['GLUE_INSTALLATION']
 easy_install.main( ["--install-dir", install_path, "https://files.pythonhosted.org/packages/83/03/10902758730d5cc705c0d1dd47072b6216edc652bc2e63a078b58c0b32e6/pg8000-1.12.5.tar.gz"] )
 reload(site)
 import pg8000
+from urlparse import urlparse
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -51,7 +52,10 @@ try:
     try:
         import boto3
         s3 = boto3.resource('s3')
-        obj = s3.Object('redshift-immersionday-labs', 'lab2.sql')
+        o = urlparse(cmd)
+        bucket = o.netloc
+        key = o.path
+        obj = s3.Object(bucket, key.lstrip('/'))
         cmd = obj.get()['Body'].read().decode('utf-8')
 
         for statement in cmd.split(';'):
