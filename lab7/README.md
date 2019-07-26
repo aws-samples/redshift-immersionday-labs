@@ -6,9 +6,8 @@ In this lab, we step through some common operations a Redshift Administrator may
 * [Before You Begin](#before-you-begin)
 * [Event Subscriptions](#event-subscriptions)
 * [Cluster Encryption](#cluster-encryption)
-* [Cross Region Replication](#cross-region-replication)
+* [Cross Region Snapshots](#cross-region-snapshots)
 * [Elastic Resize](#elastic-resize)
-* [Release Rollback](#release-rollback)
 * [Before You Leave](#before-you-leave)
 
 ## Before You Begin
@@ -57,7 +56,7 @@ https://console.aws.amazon.com/redshift/home?#cluster-list
 5. You should also receive an email notification about the cluster resize because of the event subscription we setup earlier.
 <table><tr><td><img src=../images/ResizeNotification.png></td></tr></table>
 
-## Cross Region Replication
+## Cross Region Snapshots
 1. Navigate to your Redshift Cluster list.  Select your cluster and click on *Backup* -> *Configure Cross-region snapshots*.
 ```
 https://console.aws.amazon.com/redshift/home?#cluster-list
