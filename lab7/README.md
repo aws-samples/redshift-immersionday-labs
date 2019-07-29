@@ -26,7 +26,7 @@ https://console.aws.amazon.com/redshift/home?#events:cluster=
 3. Create a subscription for *any* severity *management* notification on *any cluster*.   Notice the types of event on the right you will recieve a notification for.
 <table><tr><td><img src=../images/CreateSubscription_1.png></td></tr></table>
 
-4. Name the subscription *CLusterManagement* and click *Next*.
+4. Name the subscription *ClusterManagement* and click *Next*.
 <table><tr><td><img src=../images/CreateSubscription_2.png></td></tr></table>
 
 5. Select the *Create New Topic* tab and enter the topic name *ClusterManagement*.  Add your email address and click *Add Recipient*.  Finally, click *Create*.
