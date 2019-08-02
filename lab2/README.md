@@ -289,7 +289,7 @@ Let’s try to load the CUSTOMER table with a different data file with mismatche
 ```
 COPY customer FROM 's3://redshift-immersionday-labs/data/nation/nation.tbl.'
 iam_role 'arn:aws:iam::[Your-AWS_Account_Id]:role/[Your-Redshift-Role]'
-lzop delimiter '|' noload;
+region 'us-west-2' lzop delimiter '|' noload;
 ```
 
 You will get the following error.
