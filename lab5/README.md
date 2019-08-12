@@ -13,7 +13,7 @@ In this lab, we show you how to diagnose your Redshift Spectrum query performanc
 * [Before You Leave](#before-you-leave)
 
 ## Before You Begin
-This lab assumes you have launched a Redshift cluster, and can gather the following information.  If you have not launched a cluster, see [LAB 1 - Creating Redshift Clusters](../lab1/README.md).  
+This lab assumes you have launched a Redshift cluster in **US-WEST-2 (Oregon)**, and can gather the following information.  If you have not launched a cluster, see [LAB 1 - Creating Redshift Clusters](../lab1/README.md).  
 * [Your-Redshift_Hostname]
 * [Your-Redshift_Port]
 * [Your-Redshift_Username]
