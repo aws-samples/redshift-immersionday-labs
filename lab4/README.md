@@ -169,7 +169,7 @@ Because external tables are stored in a shared Glue Catalog for use within the A
 	![](../images/crawler_2.png)
 	1. Choose *S3* as the data store and the include path of *s3://us-west-2.serverless-analytics/canonical/NY-Pub*
 	![](../images/crawler_3.png)
-	1. *Choose an existing IAM Role* and select a Role which Glue can assume and which has access to S3. If you don't have a Glue Role, you can also select *Create an IAM role*.
+	1. *Create an IAM Role* and enter the name AWSGlueServiceRole-*RedshiftImmersion*.  
 	![](../images/crawler_4.png)
 	1. Select *Run on demand* for the frequency.
 	![](../images/crawler_5.png)
