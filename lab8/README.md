@@ -1,7 +1,28 @@
 ## Lab 6 – Querying Nested JSON
 In this lab, we show yoy how to query Nested JSON datatypes (array, struct, map) using Amazon Redshift as well as how to leverage Redshift Spectrum to load nested data types into flattened structures.
 
-**Why nested data?**
+## Contents
+* [Before You Begin](#before-you-begin)
+* [Background](#background)
+* [Infer JSON Schema](#infer-json-schema)
+* [Review JSON Schema](#review-json-schema)
+* [Query JSON data using Redshift Spectrum](#query-json-data-using-redshift-spectrum)
+* [Load JSON data using Redshift Spectrum](#load-json-data-using-redshift-spectrum)
+* [Before You Leave](#before-you-leave)
+
+## Before You Begin
+This lab assumes you have launched a Redshift cluster in US-WEST-2 (Oregon), and can gather the following information. If you have not launched a cluster, see LAB 1 - Creating Redshift Clusters.
+* [Your-Redshift_Hostname]
+* [Your-Redshift_Port]
+* [Your-Redshift_Username]
+* [Your-Redshift_Password]
+* [Your-Redshift_Role]
+* [Your-AWS-Account_Id]
+* [Your-Glue_Role]
+It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see Lab 1 - Creating Redshift Clusters : Configure Client Tool. As an alternative you can use the Amazon Redshift provided online Query Editor which does not require an installation.
+
+
+## Background
 Nested data support enables Redshift customers to directly query their nested data from Redshift through Spectrum.  Customers already have nested data in their Amazon S3 data lake.  For example, commonly java applications often use JSON as a standard for data exchange. Redshift Spectrum supports nested data types for the following format
 * Apache Parquet
 * Apache ORC
@@ -43,92 +64,48 @@ Create even more complex data types by (deeply) nesting complex data types like 
 Orders array<struct<Date: timestamp, Price: double precision>>
 ```
 
-This lab assumes you have launched a Redshift cluster in US-WEST-2 (Oregon), and can gather the following information. If you have not launched a cluster, see LAB 1 - Creating Redshift Clusters.
-* [Your-Redshift_Hostname]
-* [Your-Redshift_Port]
-* [Your-Redshift_Username]
-* [Your-Redshift_Password]
-* [Your-Redshift_Role]
-* [Your-AWS-Account_Id]
-* [Your-Glue_Role]
-It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see Lab 1 - Creating Redshift Clusters : Configure Client Tool. As an alternative you can use the Amazon Redshift provided online Query Editor which does not require an installation.
+## Infer JSON Schema
+We will create AWS Glue crawler to infer the JSON dataset
 
-Infer Nested JSON Schema
-1.	We will create AWS Glue crawler to infer the JSON dataset
-Navigate to the 
-I.	Glue Crawler Page. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers 
+1. Navigate to the Glue Crawler Page. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers.  Click on *Add crawler*.
+<table><tr><td><img src=../images/lab8_crawler1.png></td></tr></table>
+2. Name the crawler nested-json and click next
+<table><tr><td><img src=../images/lab8_crawler2.png></td></tr></table>
+3. Select Data Stores as source type and click next
+<table><tr><td><img src=../images/lab8_crawler3.png></td></tr></table>
+4. Choose 
+* Data store as s3
+* Specified path in another account
+* Path:  s3://redshift-immersionday-labs/data/nested-json
+<table><tr><td><img src=../images/lab8_crawler4.png></td></tr></table>
+5. Click – No for add another data store and click next
+6. Select create an IAM role, specify the name of the role as below and click next
+7. Frequency select run on demand and click next
+8. Configure the crawler’s output, select add database
+9. Specify database name as nested-json and click create. This will create AWS Glue database. Click next.
+10. Review all and click finish
+11. We have now created the crawler, click on run it now. The crawler will automatically infer the schema of the JSON datasets.
 
-              Click on add crawler
-
- 
-
-II.	Name the crawler nested-json and click next
-
- 
-
-III.	Select Data Stores as source type and click next
-
- 
-
-IV.	Choose 
-•	Data store as s3
-•	Specified path in another account
-•	Path:  s3://redshift-immersionday-labs/data/nested-json
+When the crawler finishes, you will see the crawler in ready status and you will see Tables added as 1
 
  
- 
-V.	Click – No for add another data store and click next
-
- 
-
-VI.	Select create an IAM role, specify the name of the role as below and click next
- 
-
-VII.	Frequency select run on demand and click next
-
- 
-VIII.	Configure the crawler’s output, select add database
- 
-
-IX.	Specify database name as nested-json and click create. This will create AWS Glue database
-
- 
-
-Click next
- 
-
-X.	Review all and click finish
-
- 
-
-XI.	We have now created the crawler, click on run it now. The crawler will automatically infer the schema of the JSON datasets.
-
- 
-
- When the crawler finishes, you will see the crawler in ready status and you will see Tables added as 1
-
- 
-2.	Let’s navigate the schema of the JSON dataset
+## Review JSON Schema
 
 Click on Databases  nested-json  cusnested-json. 
 Review the Table properties
 
-
- 
 
 Click – Edit Schema and review the schema created by the crawler.
 The JSON dataset contains struct, arrays. Crawler created superset of the columns in the table definition.
    Note: Customer_1.JSON file has c_comments key
                but customer_2.JSON and customer_3.JSON does not have c_comment column/key.
 
- 
 
-
-3.	Let’s query this external table cusnested-json using Amazon Redshift. 
+## Query JSON data using Redshift Spectrum
 
 I.	Login to Redshift and create external schema
 
- CREATE external SCHEMA nested_json
+CREATE external SCHEMA nested_json
 FROM data catalog DATABASE 'nested-json' 
 IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
 CREATE external DATABASE if not exists;
@@ -220,9 +197,8 @@ order by c_name;
 
  
 
-
-4.	Let’s leverage Redshift Spectrum to ingest JSON data set in Redshift local tables. 
-This is one usage pattern to leverage Redshift Spectrum for ELT. We will also join Redshift local tables to external tables in this example.
+## Load JSON data using Redshift Spectrum
+Let’s leverage Redshift Spectrum to ingest JSON data set in Redshift local tables. This is one usage pattern to leverage Redshift Spectrum for ELT. We will also join Redshift local tables to external tables in this example.
 
 Let’s create Redshift local staging tables.
 
@@ -271,13 +247,6 @@ create table stg_lineitem
   l_shipmode     char(10) not null,
   l_comment varchar(44) not null)
 backup no;
-
-
-
-
-
-
-
 
 
 Let’s write the ELT code to ingest JSON data residing on s3 using Redshift Spectrum into Redshift local tables
@@ -391,8 +360,6 @@ select 'orders', count(*) from stg_orders
 union all
 select 'lineitem', count(*) from stg_lineitem;
 
- 
-
-
-For Redshift Spectrum best practices refer to this blog:
+## Before You Leave
+If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources. For Redshift Spectrum best practices refer to this blog:
 https://aws.amazon.com/blogs/big-data/10-best-practices-for-amazon-redshift-spectrum/
