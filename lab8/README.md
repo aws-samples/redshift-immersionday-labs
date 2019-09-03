@@ -109,16 +109,16 @@ We will create AWS Glue crawler to infer the JSON dataset
 
  
 ## Review JSON Schema
+Navigate to the Glue Catalog and click on the *cusnested-json* table. 
 
-Click on Databases  nested-json  cusnested-json. 
-Review the Table properties
+```
+https://console.aws.amazon.com/glue/home?#catalog:tab=tables
+```
+Click – *Edit Schema* and review the schema created by the crawler.
+<table><tr><td><img src=../images/lab8_table1.png></td></tr></table>
 
-
-Click – Edit Schema and review the schema created by the crawler.
-The JSON dataset contains struct, arrays. Crawler created superset of the columns in the table definition.
-   Note: Customer_1.JSON file has c_comments key
-               but customer_2.JSON and customer_3.JSON does not have c_comment column/key.
-
+The JSON dataset contains struct, array columns. The Crawler created a superset of the columns in the table definition.  Note: Customer_1.JSON file has c_comments key but customer_2.JSON and customer_3.JSON does not have c_comment column/key.
+<table><tr><td><img src=../images/lab8_table2.png></td></tr></table>
 
 ## Query JSON data using Redshift Spectrum
 
