@@ -73,6 +73,7 @@ We will create AWS Glue crawler to infer the JSON dataset
 <table><tr><td><img src=../images/lab8_crawler02.png></td></tr></table>
 3. Select Data Stores as source type and click next
 <table><tr><td><img src=../images/lab8_crawler03.png></td></tr></table>
+
 4. Set the data store as *s3*, select the radio *Specified path in another account*, and enter the path *s3://redshift-immersionday-labs/data/nested-json*. 
 
 <table><tr><td><img src=../images/lab8_crawler04.png></td></tr></table>
