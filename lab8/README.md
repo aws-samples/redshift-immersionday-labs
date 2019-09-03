@@ -117,110 +117,104 @@ https://console.aws.amazon.com/glue/home?#catalog:tab=tables
 Click – *Edit Schema* and review the schema created by the crawler.
 <table><tr><td><img src=../images/lab8_table1.png></td></tr></table>
 
-The JSON dataset contains struct, array columns. The Crawler created a superset of the columns in the table definition.  Note: Customer_1.JSON file has c_comments key but customer_2.JSON and customer_3.JSON does not have c_comment column/key.
+The JSON dataset contains struct, array columns. 
 <table><tr><td><img src=../images/lab8_table2.png></td></tr></table>
+
+Note: The Crawler created a superset of the columns in the table definition. Customer_1.JSON file has c_comments key but customer_2.JSON and customer_3.JSON does not have c_comment column/key.
 
 ## Query JSON data using Redshift Spectrum
 
-I.	Login to Redshift and create external schema
+1. Login to Redshift and create external schema
 
+```sql
 CREATE external SCHEMA nested_json
 FROM data catalog DATABASE 'nested-json' 
 IAM_ROLE 'arn:aws:iam::[Your-AWS-Account_Id]:role/[Your-Redshift_Role]'
 CREATE external DATABASE if not exists;
+```
 
-Run the following query to view customer name, address and comments
+2. Run the following query to view customer name, address and comments
 
-select cust.c_name, cust.c_address, cust.c_comment
-from nested_json.cusnested_json cust
-order by cust.c_name;
-
-You will see the following output
-
- 
-
-Notice how c_comment key was not present in customer_2 and customer_3 JSON file. This demonstrate the case, when the file format of files could be different using Glue crawler which creates superset of columns – supports schema evolution. The files which has the key will return the value and the files that do not have that column will return null.
-
-
-II.	Now let’s query Order struct and Order array data type
-
-  
-
-
-III.	First we will check how many orders each customer has
-
-
-
-Select  cust.c_name     ,     count(*)
-from
-    nested_json.cusnested_json cust,
-    cust.orders.order co  
-group by cust.c_name
-order by cust.c_name;
-
- 
-
-
-
-
-
-IV.	Querying arrays to flatten or un-nest the Order columns
-
-Notice how the scalar in an array is queried using alias (e.g. co.o_totalprice   ).
-Struct data type is queried using the dot-notation (e.g. cust.c_name)
-
-select cust.c_name     ,
-            co.o_orderstatus     ,
-            co.o_totalprice     ,
-            to_date(co.o_orderdate,  'YYYY-MM-DD')      ,
-           co.o_order_priority     ,
-           co.o_clerk     ,
-           co.o_ship_priority     ,
-           co.o_comment  
-from nested_json.cusnested_json cust,
-           cust.orders.order co  ;
-
-
- 
-
-
-V.	Let’s further un-nest lineitems by using left join 
-
-select cust.c_name,
-       to_date(co.o_orderdate,  'YYYY-MM-DD')  
-       ,litem.l_linenumber
-       , litem.l_quantity
-       , litem.l_extendedprice
-       , litem.l_discount
-       , litem.l_tax
-       , litem.l_returnflag
-       , litem.l_linestatus
-       , to_date(litem.l_shipdate, 'YYYY-MM-DD')
-       , to_date(litem.l_commitdate, 'YYYY-MM-DD')
-       , to_date(litem.l_receiptdate, 'YYYY-MM-DD')
-       , litem.l_shipinstruct
-       , litem.l_shipmode
-       , litem.l_comment
-from  nested_json.cusnested_json cust
-   left join   cust.orders.order co on true
-   left join   co.lineitems.lineitem litem on true	
-     ;
-	  
-VI.	Aggregating nested data with subqueries
-
-SELECT cust.c_name, 
-              (SELECT COUNT(*) FROM cust.orders.order o) AS ordercount ,
-              (SELECT COUNT(*) FROM cust.orders.order o, o.lineitems.lineitem l) as lineitemcount
+```sql
+SELECT cust.c_name, cust.c_address, cust.c_comment
 FROM nested_json.cusnested_json cust
-order by c_name;
+ORDER BY cust.c_name;
+```
 
- 
+You will see the following output. Notice how c_comment key was not present in customer_2 and customer_3 JSON file. This demonstrates that the format of files could be different and using the Glue crawler you can create a superset of columns – supporting schema evolution. The files which have the key will return the value and the files that do not have that key will return null.
+<table><tr><td><img src=../images/lab8_query1.png></td></tr></table>
+
+
+3. Query the Order struct and check how many orders each customer has:
+
+```sql
+SELECT  cust.c_name, count(*)
+FROM nested_json.cusnested_json cust,
+     cust.orders.order co  
+GROUP BY cust.c_name
+ORDER BY cust.c_name;
+```
+<table><tr><td><img src=../images/lab8_query2.png></td></tr></table>
+
+
+4. Query the Order arrays to flatten or un-nest the Order columns. Notice how the scalar in an array is queried using alias (e.g. co.o_totalprice).  Struct data type is queried using the dot-notation (e.g. cust.c_name)
+
+```sql
+SELECT cust.c_name,
+           co.o_orderstatus,
+           co.o_totalprice,
+           to_date(co.o_orderdate, 'YYYY-MM-DD'),
+           co.o_order_priority,
+           co.o_clerk,
+           co.o_ship_priority,
+           co.o_comment  
+FROM nested_json.cusnested_json cust,
+           cust.orders.order co;
+```
+<table><tr><td><img src=../images/lab8_query3.png></td></tr></table>
+
+5. Let’s further un-nest lineitems by using a left join 
+
+```sql
+SELECT cust.c_name,
+       to_date(co.o_orderdate, 'YYYY-MM-DD'),  
+       litem.l_linenumber,
+       litem.l_quantity,
+       litem.l_extendedprice,
+       litem.l_discount,
+       litem.l_tax,
+       litem.l_returnflag,
+       litem.l_linestatus,
+       to_date(litem.l_shipdate, 'YYYY-MM-DD'),
+       to_date(litem.l_commitdate, 'YYYY-MM-DD'),
+       to_date(litem.l_receiptdate, 'YYYY-MM-DD'),
+       litem.l_shipinstruct,
+       litem.l_shipmode,
+       litem.l_comment,
+FROM nested_json.cusnested_json cust
+LEFT JOIN cust.orders.order co on true
+LEFT JOIN co.lineitems.lineitem litem on true	
+;
+```
+<table><tr><td><img src=../images/lab8_query4.png></td></tr></table>
+
+6. Aggregating nested data with subqueries
+
+```sql
+SELECT cust.c_name, 
+       (SELECT COUNT(*) FROM cust.orders.order o) AS ordercount,
+       (SELECT COUNT(*) FROM cust.orders.order o, o.lineitems.lineitem l) as lineitemcount
+FROM nested_json.cusnested_json cust
+ORDER BY c_name;
+```
+<table><tr><td><img src=../images/lab8_query3.png></td></tr></table>
 
 ## Load JSON data using Redshift Spectrum
 Let’s leverage Redshift Spectrum to ingest JSON data set in Redshift local tables. This is one usage pattern to leverage Redshift Spectrum for ELT. We will also join Redshift local tables to external tables in this example.
 
-Let’s create Redshift local staging tables.
+1. Create Redshift local staging tables.
 
+```sql
 DROP TABLE IF EXISTS  public.stg_customer;
 create table stg_customer 
 ( c_custkey     integer not null,
@@ -266,15 +260,15 @@ create table stg_lineitem
   l_shipmode     char(10) not null,
   l_comment varchar(44) not null)
 backup no;
+```
 
+2. Write the ELT code to ingest JSON data residing on s3 using Redshift Spectrum into Redshift local tables.
 
-Let’s write the ELT code to ingest JSON data residing on s3 using Redshift Spectrum into Redshift local tables
+```sql
+BEGIN TRANSACTION;
+TRUNCATE TABLE public.stg_customer;
 
-
-begin transaction;
-truncate table public.stg_customer;
-
-insert into public.stg_customer
+INSERT INTO public.stg_customer
 (        c_custkey
        , c_name
        , c_address
@@ -284,18 +278,18 @@ insert into public.stg_customer
        , c_mktsegment
        , c_comment
 )
-select row_number() over (order by cust.c_name),
+SELECT row_number() over (order by cust.c_name),
        cust.c_name, 
        cust.c_address,
-	cust.c_nationkey,
-	   cust.c_phone,
-	   cust.c_acctbal,
-	   cust.c_mktsegment,
-	   coalesce(cust.c_comment,'unk')
-from nested_json.cusnested_json cust;
+       cust.c_nationkey,
+       cust.c_phone,
+       cust.c_acctbal,
+       cust.c_mktsegment,
+       coalesce(cust.c_comment,'unk')
+FROM nested_json.cusnested_json cust;
 
-truncate public.stg_orders ;
-insert into public.stg_orders 
+TRUNCATE TABLE public.stg_orders ;
+INSERT INTO public.stg_orders 
 (        o_orderkey
        , o_custkey
        , o_orderstatus
@@ -307,26 +301,26 @@ insert into public.stg_orders
        , o_comment
 )
 
-select  row_number() over (order by cust.c_name) 
+SELECT row_number() over (order by cust.c_name) 
        ,stgcust.c_custkey
-	   ,co.o_orderstatus
-	   ,co.o_totalprice
-	   ,to_date(co.o_orderdate, 'YYYY-MM-DD') 
-	   ,co.o_order_priority
-	   ,co.o_clerk
-	   ,co.o_ship_priority
-	   ,co.o_comment
-from   nested_json.cusnested_json cust, 
-       cust.orders.order co,
-	public.stg_customer stgcust
-where cust.c_name = stgcust.c_name;
+       ,co.o_orderstatus
+       ,co.o_totalprice
+       ,to_date(co.o_orderdate, 'YYYY-MM-DD') 
+       ,co.o_order_priority
+       ,co.o_clerk
+       ,co.o_ship_priority
+       ,co.o_comment
+FROM nested_json.cusnested_json cust, 
+     cust.orders.order co,
+     public.stg_customer stgcust
+WHERE cust.c_name = stgcust.c_name;
 
 
-truncate stg_lineitem;
+TRUNCATE TABLE stg_lineitem;
 INSERT INTO public.stg_lineitem 
 (        l_orderkey
-       ,l_partname
-	   ,l_supplyname
+       , l_partname
+       , l_supplyname
        , l_linenumber
        , l_quantity
        , l_extendedprice
@@ -342,9 +336,9 @@ INSERT INTO public.stg_lineitem
        , l_comment
 )
 
-select   so.o_orderkey 
-       ,litem.p_name
-	   ,litem.s_name
+SELECT so.o_orderkey 
+       , litem.p_name
+       , litem.s_name
        , litem.l_linenumber
        , litem.l_quantity
        , litem.l_extendedprice
@@ -358,26 +352,29 @@ select   so.o_orderkey
        , litem.l_shipinstruct
        , litem.l_shipmode
        , litem.l_comment
-from  nested_json.cusnested_json cust, 
-          cust.orders.order co,
-          co.lineitems.lineitem litem,
-          public.stg_orders so,
-         public.stg_customer sc
-where to_date(co.o_orderdate, 'YYYY-MM-DD') = so.o_orderdate
+FROM nested_json.cusnested_json cust, 
+     cust.orders.order co,
+     co.lineitems.lineitem litem,
+     public.stg_orders so,
+     public.stg_customer sc
+WHERE to_date(co.o_orderdate, 'YYYY-MM-DD') = so.o_orderdate
     and co.o_totalprice = so.o_totalprice
-	and so.o_custkey = sc.c_custkey
-	and sc.c_name = cust.c_name
-     ;
+    and so.o_custkey = sc.c_custkey
+    and sc.c_name = cust.c_name
+;
 
-end transaction;
+END TRANSACTION;
+```
 
-Query the counts in each of the tables;
+3. Query the counts in each of the tables;
 
-select 'customer', count(*) from stg_customer
-union all
-select 'orders', count(*) from stg_orders
-union all
-select 'lineitem', count(*) from stg_lineitem;
+```sql
+SELECT 'customer', count(*) from stg_customer
+UNION ALL
+SELECT 'orders', count(*) from stg_orders
+UNION ALL
+SELECT 'lineitem', count(*) from stg_lineitem;
+``` 
 
 ## Before You Leave
 If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources. For Redshift Spectrum best practices refer to this blog:
