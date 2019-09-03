@@ -73,12 +73,9 @@ We will create AWS Glue crawler to infer the JSON dataset
 <table><tr><td><img src=../images/lab8_crawler02.png></td></tr></table>
 3. Select Data Stores as source type and click next
 <table><tr><td><img src=../images/lab8_crawler03.png></td></tr></table>
-4. Choose 
-* Data store as s3
-* Specified path in another account
-* Path:  s3://redshift-immersionday-labs/data/nested-json
+4. Set the data store as *s3*, select the radio *Specified path in another account*, and enter the path *s3://redshift-immersionday-labs/data/nested-json*.
 <table><tr><td><img src=../images/lab8_crawler04.png></td></tr></table>
-5. Click – No for add another data store and click next
+5. Click – *No* for add another data store and click next
 <table><tr><td><img src=../images/lab8_crawler05.png></td></tr></table>
 6. Select create an IAM role, specify the name of the role as below and click next
 <table><tr><td><img src=../images/lab8_crawler06.png></td></tr></table>
@@ -88,12 +85,13 @@ We will create AWS Glue crawler to infer the JSON dataset
 <table><tr><td><img src=../images/lab8_crawler08.png></td></tr></table>
 9. Specify database name as nested-json and click create. This will create AWS Glue database. Click next.
 <table><tr><td><img src=../images/lab8_crawler09.png></td></tr></table>
-10. Review all and click finish
+10. Specify a table prefix of *cus*.
 <table><tr><td><img src=../images/lab8_crawler10.png></td></tr></table>
-11. We have now created the crawler, click on run it now. The crawler will automatically infer the schema of the JSON datasets.
+11. Review all and click finish
 <table><tr><td><img src=../images/lab8_crawler11.png></td></tr></table>
-
-When the crawler finishes, you will see the crawler in ready status and you will see Tables added as 1
+12. We have now created the crawler, click on run it now. The crawler will automatically infer the schema of the JSON datasets.
+<table><tr><td><img src=../images/lab8_crawler12.png></td></tr></table>
+13.When the crawler finishes, you will see the crawler in ready status and you will see Tables added as 1
 <table><tr><td><img src=../images/lab8_crawler13.png></td></tr></table>
 
  
