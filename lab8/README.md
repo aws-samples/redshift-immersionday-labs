@@ -196,7 +196,6 @@ LEFT JOIN cust.orders.order co on true
 LEFT JOIN co.lineitems.lineitem litem on true	
 ;
 ```
-<table><tr><td><img src=../images/lab8_query4.png></td></tr></table>
 
 6. Aggregating nested data with subqueries
 
@@ -207,7 +206,7 @@ SELECT cust.c_name,
 FROM nested_json.cusnested_json cust
 ORDER BY c_name;
 ```
-<table><tr><td><img src=../images/lab8_query3.png></td></tr></table>
+<table><tr><td><img src=../images/lab8_query4.png></td></tr></table>
 
 ## Load JSON data using Redshift Spectrum
 Let’s leverage Redshift Spectrum to ingest JSON data set in Redshift local tables. This is one usage pattern to leverage Redshift Spectrum for ELT. We will also join Redshift local tables to external tables in this example.
@@ -375,6 +374,8 @@ SELECT 'orders', count(*) from stg_orders
 UNION ALL
 SELECT 'lineitem', count(*) from stg_lineitem;
 ``` 
+<table><tr><td><img src=../images/lab8_query5.png></td></tr></table>
+
 
 ## Before You Leave
 If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources. For Redshift Spectrum best practices refer to this blog:
