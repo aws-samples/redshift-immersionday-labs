@@ -68,25 +68,33 @@ Orders array<struct<Date: timestamp, Price: double precision>>
 We will create AWS Glue crawler to infer the JSON dataset
 
 1. Navigate to the Glue Crawler Page. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers.  Click on *Add crawler*.
-<table><tr><td><img src=../images/lab8_crawler1.png></td></tr></table>
+<table><tr><td><img src=../images/lab8_crawler01.png></td></tr></table>
 2. Name the crawler nested-json and click next
-<table><tr><td><img src=../images/lab8_crawler2.png></td></tr></table>
+<table><tr><td><img src=../images/lab8_crawler02.png></td></tr></table>
 3. Select Data Stores as source type and click next
-<table><tr><td><img src=../images/lab8_crawler3.png></td></tr></table>
+<table><tr><td><img src=../images/lab8_crawler03.png></td></tr></table>
 4. Choose 
 * Data store as s3
 * Specified path in another account
 * Path:  s3://redshift-immersionday-labs/data/nested-json
-<table><tr><td><img src=../images/lab8_crawler4.png></td></tr></table>
+<table><tr><td><img src=../images/lab8_crawler04.png></td></tr></table>
 5. Click – No for add another data store and click next
+<table><tr><td><img src=../images/lab8_crawler05.png></td></tr></table>
 6. Select create an IAM role, specify the name of the role as below and click next
+<table><tr><td><img src=../images/lab8_crawler06.png></td></tr></table>
 7. Frequency select run on demand and click next
+<table><tr><td><img src=../images/lab8_crawler07.png></td></tr></table>
 8. Configure the crawler’s output, select add database
+<table><tr><td><img src=../images/lab8_crawler08.png></td></tr></table>
 9. Specify database name as nested-json and click create. This will create AWS Glue database. Click next.
+<table><tr><td><img src=../images/lab8_crawler09.png></td></tr></table>
 10. Review all and click finish
+<table><tr><td><img src=../images/lab8_crawler10.png></td></tr></table>
 11. We have now created the crawler, click on run it now. The crawler will automatically infer the schema of the JSON datasets.
+<table><tr><td><img src=../images/lab8_crawler11.png></td></tr></table>
 
 When the crawler finishes, you will see the crawler in ready status and you will see Tables added as 1
+<table><tr><td><img src=../images/lab8_crawler13.png></td></tr></table>
 
  
 ## Review JSON Schema
