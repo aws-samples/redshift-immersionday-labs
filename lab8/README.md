@@ -19,6 +19,7 @@ This lab assumes you have launched a Redshift cluster in US-WEST-2 (Oregon), and
 * [Your-Redshift_Role]
 * [Your-AWS-Account_Id]
 * [Your-Glue_Role]
+
 It also assumes you have access to a configured client tool. For more details on configuring SQL Workbench/J as your client tool, see Lab 1 - Creating Redshift Clusters : Configure Client Tool. As an alternative you can use the Amazon Redshift provided online Query Editor which does not require an installation.
 
 
