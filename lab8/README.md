@@ -31,7 +31,8 @@ Nested data support enables Redshift customers to directly query their nested da
 * Amazon Ion
 
 **Complex Data Types** 
-*Struct* - this type allows data to be grouped multiple values of any type together into a new type. Values are identified by a *Field Name* and *Field Type*.  In the following example, the *Name* field is a struct which has two nested fields of the *string* type.
+
+*Struct* - this type allows multiple values of any type to be grouped together into a new type. Values are identified by a *Field Name* and *Field Type*.  In the following example, the *Name* field is a struct which has two nested fields of the *string* type.
 
 ```
 {Name: {Given:"John", Family:"Smith"}}
@@ -71,41 +72,41 @@ We will create AWS Glue crawler to infer the JSON dataset
 1. Navigate to the Glue Crawler Page. https://console.aws.amazon.com/glue/home?#catalog:tab=crawlers.  Click on *Add crawler*.
 <table><tr><td><img src=../images/lab8_crawler01.png></td></tr></table>
 
-2. Name the crawler nested-json and click next
+2. Name the crawler *nested-json* and click *Next*
 <table><tr><td><img src=../images/lab8_crawler02.png></td></tr></table>
 
-3. Select Data Stores as source type and click next
+3. Select *Data Stores* as source type and click *Next*
 <table><tr><td><img src=../images/lab8_crawler03.png></td></tr></table>
 
 4. Set the data store as *s3*, select the radio *Specified path in another account*, and enter the path *s3://redshift-immersionday-labs/data/nested-json*. 
 
 <table><tr><td><img src=../images/lab8_crawler04.png></td></tr></table>
 
-5. Click – *No* for add another data store and click next
+5. Click – *No* for *Add another data store* and click *Next*
 <table><tr><td><img src=../images/lab8_crawler05.png></td></tr></table>
 
-6. Select create an IAM role, specify the name of the role as below and click next
+6. Select *Create an IAM role*, specify the name of the role as below and click *Next*
 <table><tr><td><img src=../images/lab8_crawler06.png></td></tr></table>
 
-7. Frequency select run on demand and click next
+7. Select *Run on demand* for the frequency and click *Next*
 <table><tr><td><img src=../images/lab8_crawler07.png></td></tr></table>
 
-8. Configure the crawler’s output, select add database
+8. Click *Add database* to create an new AWS Glue database
 <table><tr><td><img src=../images/lab8_crawler08.png></td></tr></table>
 
-9. Specify database name as nested-json and click create. This will create AWS Glue database. Click next.
+9. Specify database name as *nested-json* and click *Create* 
 <table><tr><td><img src=../images/lab8_crawler09.png></td></tr></table>
 
-10. Specify a table prefix of *cus*.
+10. Specify a table prefix of *cus* and click *Next*
 <table><tr><td><img src=../images/lab8_crawler10.png></td></tr></table>
 
-11. Review all and click finish
+11. Review all settings and click *Finish*
 <table><tr><td><img src=../images/lab8_crawler11.png></td></tr></table>
 
-12. We have now created the crawler, click on run it now. The crawler will automatically infer the schema of the JSON datasets.
+12. We have now created the crawler, click on *Run it now*. The crawler will automatically infer the schema of the JSON datasets.
 <table><tr><td><img src=../images/lab8_crawler12.png></td></tr></table>
 
-13.When the crawler finishes, you will see the crawler in ready status and you will see Tables added as 1
+13.When the crawler finishes, you will see the crawler in *Ready* status and you will see *Tables added* as *1*
 <table><tr><td><img src=../images/lab8_crawler13.png></td></tr></table>
 
  
