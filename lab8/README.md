@@ -30,8 +30,8 @@ Nested data support enables Redshift customers to directly query their nested da
 * JSON
 * Amazon Ion
 
-**Complex Data Types**
-Struct - this type allows data to be grouped multiple values of any type together into a new type. Values are identified by a *Field Name* and *Field Type*.  In the following example, the *Name* field is a struct which has two nested fields of the *string* type.
+**Complex Data Types** 
+*Struct* - this type allows data to be grouped multiple values of any type together into a new type. Values are identified by a *Field Name* and *Field Type*.  In the following example, the *Name* field is a struct which has two nested fields of the *string* type.
 
 ```
 {Name: {Given:"John", Family:"Smith"}}
@@ -42,7 +42,7 @@ Struct - this type allows data to be grouped multiple values of any type togethe
 Name struct<Given: string, Family: string>
 ```
 
-Array/Map - this type defines a collection of an arbitrary number of elements of a certain type.  In the following example, the *Phones* field is an array of elements with the *string* type.
+*Array/Map* - this type defines a collection of an arbitrary number of elements of a certain type.  In the following example, the *Phones* field is an array of elements with the *string* type.
 
 ```
 {Phones: ["123-457789"]}
