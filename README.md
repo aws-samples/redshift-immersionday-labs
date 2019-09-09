@@ -14,6 +14,7 @@ Amazon Redshift is a fast, fully managed, petabyte-scale data warehouse solution
 |5 |[Amazon Redshift Spectrum Query Tuning](lab5/README.md) | Diagnose Redshift Spectrum query performance and optimize by leveraging partitions, optimizing storage, and predicate pushdown.|
 |6 |[Query Redshift from Amazon RDS PostgreSQL](https://aws.amazon.com/blogs/big-data/join-amazon-redshift-and-amazon-rds-postgresql-with-dblink/) |JOIN Amazon Redshift AND Amazon RDS PostgreSQL WITH dblink |
 |7 | [Amazon Redshift Operations](lab7/README.md) | Step through some common operations a Redshift Administrator may have to do to maintain their Redhshift environment including Event Subscriptions, Cluster Encryption, Cross Region Snapshots, and Elastic Resize |
+|8 | [Querying Nested JSON](lab8/README.md)| Query Nested JSON datatypes (array, struct, map) and load nested data types into flattened structures. |
 
 ## License Summary
 
