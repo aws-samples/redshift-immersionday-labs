@@ -226,7 +226,7 @@ LEFT JOIN co.lineitems.lineitem litem on true
 
 6. Find the retail price for each customer
 
-```
+```sql
 SELECT cust.c_name,
   sum(litem.p_retailprice)
 FROM  nested_json.cusnested_json cust
@@ -402,7 +402,7 @@ WHERE to_date(co.o_orderdate, 'YYYY-MM-DD') = so.o_orderdate
 END TRANSACTION;
 ```
 
-3. Query the counts in each of the tables;
+3. Query the counts in each of the tables.
 
 ```sql
 SELECT 'customer', count(*) from stg_customer
@@ -530,8 +530,10 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
+Execute the procedure
+```
 call sp_loadtpch(current_date);
-
+```
 
 ## Before You Leave
 If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources. For Redshift Spectrum best practices refer to this blog:
