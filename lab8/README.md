@@ -273,9 +273,9 @@ create table stg_orders
   o_totalprice     decimal(15,2) not null,
   o_orderdate      date not null,
   o_orderpriority  char(15) not null,  
-  o_clerk          char(15) not null, 
+  o_clerk          varchar(20) not null, 
   o_shippriority   integer not null,
-o_comment varchar(79) not null)
+  o_comment        varchar(100) not null)
 backup no;
 
 DROP TABLE IF EXISTS  public. stg_lineitem;
