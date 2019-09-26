@@ -200,7 +200,7 @@ FROM nested_json.cusnested_json cust,
 ```
 <table><tr><td><img src=../images/lab8_query3.png></td></tr></table>
 
-5. Let’s further un-nest lineitems by using a left join 
+5. Further un-nest lineitems by using a left join.
 
 ```sql
 SELECT cust.c_name,
@@ -224,7 +224,7 @@ LEFT JOIN co.lineitems.lineitem litem on true
 ;
 ```
 
-Now find the retail price for each customer
+6. Find the retail price for each customer
 
 ```
 SELECT cust.c_name,
@@ -235,7 +235,7 @@ LEFT JOIN co.lineitems.lineitem litem on true
 GROUP BY cust.c_name;
 ```
 
-6. Aggregating nested data with subqueries
+7. Aggregating nested data with subqueries
 
 ```sql
 SELECT cust.c_name, 
