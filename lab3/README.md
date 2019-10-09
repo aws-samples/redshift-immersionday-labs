@@ -401,7 +401,7 @@ UPDATE customer_v3
 SET c_mktsegment = c_mktsegment
 WHERE c_mktsegment = 'MACHINERY';
 ```
-````
+```
 VACUUM DELETE ONLY customer_v3;
 ```
 ```
