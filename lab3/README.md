@@ -27,10 +27,10 @@ Redshift operates on high amounts of data. In order to optimize Redshift workloa
 
 Note: You can apply compression encodings to columns in tables automatically when using the COPY command into an empty table.  However, in this lab we will analyze and apply compression manually after data has been loaded to demonstrate the performance gains of using correct compression.
 
-1. Create the customer table using the default settings, only specifying DISTKEY and SORTKEY to the customer key.
+1. Create the customer table using the default settings, only specifying DISTKEY to the customer key.
 ```
 CREATE TABLE customer_v1 (
-  c_custkey int8 NOT NULL DISTKEY SORTKEY PRIMARY KEY      ,
+  c_custkey int8 NOT NULL PRIMARY KEY                      ,
   c_name varchar(25) NOT NULL                              ,
   c_address varchar(40) NOT NULL                           ,
   c_nationkey int4 NOT NULL REFERENCES nation(n_nationkey) ,
@@ -38,7 +38,7 @@ CREATE TABLE customer_v1 (
   c_acctbal numeric(12,2) NOT NULL                         ,
   c_mktsegment char(10) NOT NULL                           ,
   c_comment varchar(117) NOT NULL
-);
+) DISTKEY (c_custkey);
 ```
 
 2. Import data from the customer table and analyze statistics.
@@ -58,18 +58,18 @@ ANALYZE COMPRESSION customer_v1;
 ### Compression Optimization
 Based on the results from the previous “ANALYZE COMPRESSION” command, we can insert the same data in a new table and analyze the difference in storage.
 
-4. Create the new customer table using the hints provided by the last compression analysis.
+4. Create the new customer table using the hints provided by the last compression analysis.  
 ```
 CREATE TABLE customer_v2 (
-  c_custkey int8 NOT NULL ENCODE DELTA DISTKEY SORTKEY PRIMARY KEY     ,
-  c_name varchar(25) NOT NULL ENCODE ZSTD                              ,
-  c_address varchar(40) NOT NULL ENCODE ZSTD                           ,
-  c_nationkey int4 NOT NULL ENCODE ZSTD  REFERENCES nation(n_nationkey),
-  c_phone char(15) NOT NULL ENCODE ZSTD                                ,
-  c_acctbal numeric(12,2) NOT NULL ENCODE ZSTD                         ,
-  c_mktsegment char(10) NOT NULL ENCODE ZSTD                           ,
+  c_custkey int8 NOT NULL ENCODE DELTA PRIMARY KEY   ,
+  c_name varchar(25) NOT NULL ENCODE ZSTD            ,
+  c_address varchar(40) NOT NULL ENCODE ZSTD         ,
+  c_nationkey int4 NOT NULL ENCODE ZSTD              ,
+  c_phone char(15) NOT NULL ENCODE ZSTD              ,
+  c_acctbal numeric(12,2) NOT NULL ENCODE ZSTD       ,
+  c_mktsegment char(10) NOT NULL ENCODE ZSTD         ,
   c_comment varchar(117) NOT NULL ENCODE ZSTD
-);
+) DISTKEY (c_custkey);
 ```
 
 5. Import data from the previous table into this table and analyze statistics.
@@ -114,7 +114,7 @@ Compression allows the storage of “reference” data inside the fact table, re
 7. Create the new customer table, de-normalizing nation and region names to be included directly in the customer table.
 ```
 CREATE TABLE customer_v3 (
-  c_custkey int8 NOT NULL ENCODE DELTA DISTKEY SORTKEY PRIMARY KEY,
+  c_custkey int8 NOT NULL ENCODE DELTA PRIMARY KEY                ,
   c_name varchar(25) NOT NULL ENCODE ZSTD                         ,
   c_address varchar(40) NOT NULL ENCODE ZSTD                      ,
   c_nationname char(25) NOT NULL ENCODE ZSTD                      ,
@@ -123,7 +123,7 @@ CREATE TABLE customer_v3 (
   c_acctbal numeric(12,2) NOT NULL ENCODE ZSTD                    ,
   c_mktsegment char(10) NOT NULL ENCODE ZSTD                      ,
   c_comment varchar(117) NOT NULL ENCODE ZSTD
-);
+) DISTKEY (c_custkey);
 ```
 
 8. Import data from the previous table into this table. Note the joins to flatten the schema and build statistics.
@@ -213,19 +213,19 @@ To help queries run fast, it is recommended to use as a distribution that will b
 Redshift also uses a specific Sort Column to know in advance what values of a column are in a given block, and to skip reading that entire block if the values it contains don’t fall into the range of a query.
 In this sample, queries are based on customer related information (region), making the customer key a good fit for distribution key, and the filters are made on order date ranges, so using it as a sort key helps execution.
 
-1. Create the orders table with default settings, this time changing DISTKEY to customer key and SORTKEY  to order date.
+1. Create the orders table with default settings, this time changing DISTKEY to customer key and SORTKEY to order date.  
 ```
 CREATE TABLE orders_v1 (
   o_orderkey int8 NOT NULL PRIMARY KEY                             ,
-  o_custkey int8 NOT NULL DISTKEY REFERENCES customer_v3(c_custkey),
+  o_custkey int8 NOT NULL                                          ,
   o_orderstatus char(1) NOT NULL                                   ,
   o_totalprice numeric(12,2) NOT NULL                              ,
-  o_orderdate date NOT NULL SORTKEY                                ,
+  o_orderdate date NOT NULL                                        ,
   o_orderpriority char(15) NOT NULL                                ,
   o_clerk char(15) NOT NULL                                        ,
   o_shippriority int4 NOT NULL                                     ,
   o_comment varchar(79) NOT NULL
-);
+) DISTKEY (o_custkey) SORTKEY(o_orderdate);
 ```
 
 2. Import data from the existing table into this table, clean up storage, and build statistics.
@@ -245,21 +245,19 @@ ANALYZE COMPRESSION orders_v1;
 ### All Together
 This last step will use the new distribution and sort keys, and the compression settings proposed by Redshift.
 
-4. Create the orders table using the recommended compression propositions, keeping DISTKEY to customer key and SORTKEY to order date.
-Copy the following statements to create the table in the database.
+4. Create the orders table using the recommended compression propositions, keeping DISTKEY to customer key and SORTKEY to order date.  Note: Encoding has not been added to the order date field as per the best practices because the order date is used as a sort key.
 ```
 CREATE TABLE orders_v2 (
   o_orderkey int8 NOT NULL PRIMARY KEY ENCODE ZSTD                 ,
-  o_custkey int8 NOT NULL DISTKEY REFERENCES customer_v3(c_custkey)
-ENCODE ZSTD								       ,
+  o_custkey int8 NOT NULL ENCODE ZSTD								               ,
   o_orderstatus char(1) NOT NULL ENCODE ZSTD                       ,
   o_totalprice numeric(12,2) NOT NULL ENCODE ZSTD                  ,
-  o_orderdate date NOT NULL SORTKEY ENCODE ZSTD                    ,
+  o_orderdate date NOT NULL                                        ,
   o_orderpriority char(15) NOT NULL ENCODE ZSTD                    ,
   o_clerk char(15) NOT NULL ENCODE ZSTD                            ,
   o_shippriority int4 NOT NULL ENCODE ZSTD                         ,
   o_comment varchar(79) NOT NULL ENCODE ZSTD
-);
+) DISTKEY (o_custkey) SORTKEY(o_orderdate);
 ```
 
 5. Import data and build statistics.
@@ -274,17 +272,16 @@ ANALYZE orders_v2;
 6. Finally, let do one more version using ALL distribution type to put a copy of all the data in every slice of the cluster creating the largest data foot print but putting this data as close to all other data as possible.
 ```
 CREATE TABLE orders_v3 (
-  o_orderkey int8 NOT NULL PRIMARY KEY ENCODE ZSTD                 ,
-  o_custkey int8 NOT NULL REFERENCES customer_v3(c_custkey)
-ENCODE ZSTD								       ,
-  o_orderstatus char(1) NOT NULL ENCODE ZSTD                       ,
-  o_totalprice numeric(12,2) NOT NULL ENCODE ZSTD                  ,
-  o_orderdate date NOT NULL SORTKEY ENCODE ZSTD                    ,
-  o_orderpriority char(15) NOT NULL ENCODE ZSTD                    ,
-  o_clerk char(15) NOT NULL ENCODE ZSTD                            ,
-  o_shippriority int4 NOT NULL ENCODE ZSTD                         ,
+  o_orderkey int8 NOT NULL PRIMARY KEY ENCODE ZSTD                     ,
+  o_custkey int8 NOT NULL REFERENCES customer_v3(c_custkey) ENCODE ZSTD,
+  o_orderstatus char(1) NOT NULL ENCODE ZSTD                           ,
+  o_totalprice numeric(12,2) NOT NULL ENCODE ZSTD .                    ,
+  o_orderdate date NOT NULL SORTKEY                                    ,
+  o_orderpriority char(15) NOT NULL ENCODE ZSTD                        ,
+  o_clerk char(15) NOT NULL ENCODE ZSTD                                ,
+  o_shippriority int4 NOT NULL ENCODE ZSTD                             ,
   o_comment varchar(79) NOT NULL ENCODE ZSTD
-) diststyle all;
+) DISTSTYLE ALL;
 ```
 
 7. Import data and build statistics.
@@ -403,7 +400,11 @@ GROUP BY c_mktsegment, o_orderpriority;
 UPDATE customer_v3
 SET c_mktsegment = c_mktsegment
 WHERE c_mktsegment = 'MACHINERY';
+```
+````
 VACUUM DELETE ONLY customer_v3;
+```
+```
 SELECT c_mktsegment, o_orderpriority, sum(o_totalprice)
 FROM Customer_v3 c
 JOIN Orders_v2 o on c.c_custkey = o.o_custkey
@@ -430,23 +431,23 @@ Redshift takes advantage of zone maps which allows the optimizer to skip reading
 
 6. Execute the following two queries noting the execution time of each.  The first query is to ensure the plan is compiled.  The second has a slightly different filter condition to ensure the result cache cannot be used.
 ```
-select count(1), sum(o_totalprice)
+SELECT count(1), sum(o_totalprice)
 FROM orders_v3
 WHERE o_orderdate between '1992-07-05' and '1992-07-07';
 ```
 ```
-select count(1), sum(o_totalprice)
+SELECT count(1), sum(o_totalprice)
 FROM orders_v3
 WHERE o_orderdate between '1992-07-07' and '1992-07-09';
 ```
 7. Execute the following two queries noting the execution time of each.  The first query is to ensure the plan is compiled.  The second has a slightly different filter condition to ensure the result cache cannot be used. You will notice the second query takes significantly longer than the second query in the previous step even though the number of rows which were aggregated is similar.  This is due to the first query's ability to take advantage of the Sort Key defined on the table.
 ```
-select count(1), sum(o_totalprice)
+SELECT count(1), sum(o_totalprice)
 FROM orders_v3
 where o_orderkey < 600001;
 ```
 ```
-select count(1), sum(o_totalprice)
+SELECT count(1), sum(o_totalprice)
 FROM orders_v3
 where o_orderkey < 600002;
 ```
