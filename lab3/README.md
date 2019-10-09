@@ -45,6 +45,8 @@ CREATE TABLE customer_v1 (
 ```
 INSERT INTO customer_v1
 SELECT * FROM customer;
+```
+```
 ANALYZE customer_v1;
 ```
 
@@ -74,6 +76,8 @@ CREATE TABLE customer_v2 (
 ```
 INSERT INTO customer_v2
 SELECT * FROM customer_v1;
+```
+```
 ANALYZE customer_v2;
 ```
 
@@ -129,7 +133,8 @@ SELECT c_custkey, c_name, c_address, n_name, r_name, c_phone, c_acctbal, c_mktse
 FROM customer_v2
 INNER JOIN nation ON c_nationkey = n_nationkey
 INNER JOIN region ON n_regionkey = r_regionkey;
-
+```
+```
 ANALYZE customer_v3;
 ```
 
@@ -227,6 +232,8 @@ CREATE TABLE orders_v1 (
 ```
 INSERT INTO orders_v1
 SELECT * FROM orders;
+````
+```
 ANALYZE orders_v1;
 ```
 
@@ -259,6 +266,8 @@ ENCODE ZSTD								       ,
 ```
 INSERT INTO orders_v2
 SELECT * FROM orders_v1;
+```
+```
 ANALYZE orders_v2;
 ```
 
@@ -282,6 +291,8 @@ ENCODE ZSTD								       ,
 ```
 INSERT INTO orders_v3
 SELECT * FROM orders_v2;
+```
+```
 ANALYZE orders_v3;
 ```
 
@@ -376,7 +387,7 @@ Redshift enables a result set cache to speed up retrieval of data when it knows 
 SELECT c_mktsegment, o_orderpriority, sum(o_totalprice)
 FROM Customer_v3 c
 JOIN Orders_v2 o on c.c_custkey = o.o_custkey
-GROUP BY c_mktsegment, o_orderpriority
+GROUP BY c_mktsegment, o_orderpriority;
 ```
 
 2. Execute the same query a second time and note the query execution time.  In the second execution redshift will leverage the result set cache and return immediately.
@@ -384,7 +395,7 @@ GROUP BY c_mktsegment, o_orderpriority
 SELECT c_mktsegment, o_orderpriority, sum(o_totalprice)
 FROM Customer_v3 c
 JOIN Orders_v2 o on c.c_custkey = o.o_custkey
-GROUP BY c_mktsegment, o_orderpriority
+GROUP BY c_mktsegment, o_orderpriority;
 ```
 
 3. Update data in the table and run the query again. When data in an underlying table has changed Redshift will be aware of the change and invalidate the result set cache associated to the query.  Note the execution time is not as fast as Step 2, but faster than Step 1 because while it couldn’t re-use the cache it could re-use the compiled plan.
@@ -421,23 +432,23 @@ Redshift takes advantage of zone maps which allows the optimizer to skip reading
 ```
 select count(1), sum(o_totalprice)
 FROM orders_v3
-WHERE o_orderdate between '1992-07-05' and '1992-07-07'
+WHERE o_orderdate between '1992-07-05' and '1992-07-07';
 ```
 ```
 select count(1), sum(o_totalprice)
 FROM orders_v3
-WHERE o_orderdate between '1992-07-07' and '1992-07-09'
+WHERE o_orderdate between '1992-07-07' and '1992-07-09';
 ```
 7. Execute the following two queries noting the execution time of each.  The first query is to ensure the plan is compiled.  The second has a slightly different filter condition to ensure the result cache cannot be used. You will notice the second query takes significantly longer than the second query in the previous step even though the number of rows which were aggregated is similar.  This is due to the first query's ability to take advantage of the Sort Key defined on the table.
 ```
 select count(1), sum(o_totalprice)
 FROM orders_v3
-where o_orderkey < 600001
+where o_orderkey < 600001;
 ```
 ```
 select count(1), sum(o_totalprice)
 FROM orders_v3
-where o_orderkey < 600002
+where o_orderkey < 600002;
 ```
 
 ## Join Strategies
@@ -449,7 +460,7 @@ EXPLAIN
 SELECT c_mktsegment, o_orderpriority, sum(o_totalprice)
 FROM Customer_v3 c
 JOIN Orders_v2 o on c.c_custkey = o.o_custkey
-GROUP BY c_mktsegment, o_orderpriority
+GROUP BY c_mktsegment, o_orderpriority;
 ```
 
 9. Execute an EXPLAIN on the following query.  If you recall, this version of the orders is distributed on the orderkey.  This results in a join strategy of “Hash Join DS_BCAST_INNER” and a relatively high overall “cost”.
@@ -458,7 +469,7 @@ EXPLAIN
 SELECT c_mktsegment, o_orderpriority, sum(o_totalprice)
 FROM Customer_v3 c
 JOIN Orders o on c.c_custkey = o.o_custkey
-GROUP BY c_mktsegment, o_orderpriority
+GROUP BY c_mktsegment, o_orderpriority;
 ```
 
 10. Create a new version of the orders tables which is both distributed and sorted on the values as the customer table.  Execute an EXPLAIN and notice this results in a join strategy of “Merge Join DS_DIST_NONE” with the lowest cost of the three.
@@ -478,7 +489,7 @@ GROUP BY c_mktsegment, o_orderpriority;
 11. Execute an EXPLAIN plan on the following query which is missing the join condition.  This results in a join strategy of “XN Nested Loop DS_BCAST_INNER” and throws a warning about the cartesian product.  
 ```
 EXPLAIN
-SELECT * FROM region, nation
+SELECT * FROM region, nation;
 ```
 
 ## Before You Leave
