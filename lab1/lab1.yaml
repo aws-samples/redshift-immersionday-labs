@@ -33,7 +33,7 @@ Parameters:
     Default: awsuser
     AllowedPattern: "([a-z])([a-z]|[0-9])*"
   MasterUserPassword:
-    Description: The password that is associated with the master user account for the cluster that is being created. Default is Awsuser123
+    Description: The password that is associated with the master user account for the cluster that is being created. Must have a length of 8-64 characters, contain one uppercase letter, one lowercase letter, and one number. Also only contain printable ASCII characters except for '/', '@', '"', ' ', '\' and '\'. Default is Awsuser123
     Type: String
     Default: Awsuser123
     NoEcho: 'true'
