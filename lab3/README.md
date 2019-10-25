@@ -275,7 +275,7 @@ CREATE TABLE orders_v3 (
   o_orderkey int8 NOT NULL PRIMARY KEY ENCODE ZSTD                     ,
   o_custkey int8 NOT NULL REFERENCES customer_v3(c_custkey) ENCODE ZSTD,
   o_orderstatus char(1) NOT NULL ENCODE ZSTD                           ,
-  o_totalprice numeric(12,2) NOT NULL ENCODE ZSTD .                    ,
+  o_totalprice numeric(12,2) NOT NULL ENCODE ZSTD                      ,
   o_orderdate date NOT NULL SORTKEY                                    ,
   o_orderpriority char(15) NOT NULL ENCODE ZSTD                        ,
   o_clerk char(15) NOT NULL ENCODE ZSTD                                ,
