@@ -9,6 +9,7 @@ In this lab, we show you how to diagnose your Redshift Spectrum query performanc
 * [Optimizing with Partitions](#optimizing-with-partitions)
 * [Storage Optimizations](#storage-optimizations)
 * [Predicate Pushdown](#predicate-pushdown)
+* [Redshift Spectrum Request Accelerator](#redshift-spectrum-request-accelerator)
 * [Native Redshift versus Redshift with Spectrum](#native-redshift-versus-redshift-with-spectrum)
 * [Before You Leave](#before-you-leave)
 
@@ -145,11 +146,13 @@ Expect this query to take a few minutes to complete as nearly 3.8 billion record
 
 
 ## Performance Diagnostics
-There are two key utilities that provide visibility into Redshift Spectrum:
+There are a few utilities that provide visibility into Redshift Spectrum:
 
 * [EXPLAIN](http://docs.aws.amazon.com/redshift/latest/dg/r_EXPLAIN.html) - Provides the query execution plan, which includes info around what processing is pushed down to Spectrum. Steps in the plan that include the prefix S3 are executed on Spectrum; for instance, the plan for the query above has a step “S3 Seq Scan clickstream.uservisits_csv10” indicating that Spectrum performs a scan on S3 as part of the query execution.
 
 * [SVL_S3QUERY_SUMMARY](http://docs.aws.amazon.com/redshift/latest/dg/r_SVL_S3QUERY_SUMMARY.html) - Provides statistics for Redshift Spectrum queries are stored in this table. While the execution plan presents cost estimates, this table stores actual statistics of past query runs.  
+
+* [SVL_S3PARTITION](https://docs.aws.amazon.com/redshift/latest/dg/r_SVL_S3PARTITION.html) - Provides details about Amazon Redshift Spectrum partition pruning at the segment and node slice level.
 
 1. Run the following query on the SVL_S3QUERY_SUMMARY table:
 ```sql
@@ -167,6 +170,20 @@ The query should return results similar to the following:
 |209773697|3758774345|6.61358E+11|66270117|1060321872|5040|9.77|
 
 The diagnostics reveal why our query took so long. For instance, *s3_scanned_row* reveals that the query scans nearly 3.8B records, which is the entire data set. 
+
+Using below query you can see Spectrum scans all partitions.
+```sql
+SELECT query, segment,
+       MIN(starttime) AS starttime,
+       MAX(endtime) AS endtime,
+       datediff(ms,MIN(starttime),MAX(endtime)) AS dur_ms,
+       MAX(total_partitions) AS total_partitions,
+       MAX(qualified_partitions) AS qualified_partitions,
+       MAX(assignment) as assignment_type
+FROM svl_s3partition
+WHERE query=pg_last_query_id()
+GROUP BY query, segment;
+```
 
 2. Run the same Redshift Spectrum query again, but with EXPLAIN
 ```sql
@@ -416,6 +433,42 @@ XN Merge  (cost=1000094008880.16..1000094008880.18 rows=7 width=78)
                           ->  XN Seq Scan on customer c  (cost=0.00..30000.00 rows=3000000 width=38)
 ```
 
+## Redshift Spectrum Request Accelerator
+
+Redshift Spectrum Request Accelerator (SRA) is automatically and transparently enabled, significantly improving the performance of queries against data in Amazon S3.
+
+1. Run the following query against data in year 1992. This query should run in under 10 seconds. Modify the filter and run it again for year 1993.
+```sql
+SELECT c.c_name, c.c_mktsegment, uv.visitYearMonth, uv.totalRevenue
+FROM (
+  SELECT customer, visitYearMonth, SUM(adRevenue) as totalRevenue
+  FROM clickstream.uservisits_parquet1
+  WHERE customer <= 3 and visitYearMonth between 199201 and 199212
+  GROUP BY  customer, visitYearMonth) as uv
+RIGHT OUTER JOIN customer as c ON c.c_custkey = uv.customer
+ORDER BY c.c_name, c.c_mktsegment, uv.visitYearMonth ASC;
+```
+2. Now let's run the query against data in three years, from 1992 to 1994. This query will access about 3x more data but it takes less than 3x time. This is because SRA caches the Spectrum result for year 1992 and 1993. this query can reuse it instead of processing them again.
+
+3. Inspect the SVL_S3QUERY_SUMMARY again by running the query:
+```sql
+select query, starttime, elapsed, s3_scanned_rows, s3_scanned_bytes,
+  s3query_returned_rows, s3query_returned_bytes, files, avg_request_parallelism 
+from svl_s3query_summary 
+order by query desc,segment;
+```
+
+You should observe the results below. Note that this query scans nearly 1.1B records.
+
+|query|starttime|elapsed|s3_scanned_rows|s3_scanned_bytes|s3query_returned_rows|s3query_returned_bytes|files|avg_request_parallelism|
+|---|---|---|---|---|---|---|---|---|
+|207376|2019-11-06 21:16:54.594125|2303302|1102046642|8848259230|299|117806|144|5.2|
+|207325|2019-11-06 21:12:53.917315|923104|265401542|2130891630|72|28368|36|5.3|
+|207312|2019-11-06 21:12:22.648347|1616744|265426602|2131090671|72|28368|36|4.9|
+
+This is a lot of data to process, yet the query runs in under 10 seconds. This is substantially faster than the queries we ran at the start of the lab, which queried the same dataset. The difference in performance is a result of the improvements we made to the data format, size and pushing the aggregation work down to the Spectrum layer.
+
+
 ## Native Redshift versus Redshift with Spectrum
 
 At this point, you might be asking yourself, why would I ever not use Spectrum? Well, you still get additional value from loading data into Redshift. In fact, it turns out that our last query runs even faster when executed exclusively in native Redshift. Running a full test is beyond the time we have for the lab, so let’s review test results that compares running the last query with Redshift Spectrum versus exclusively with Redshift on various cluster sizes.
@@ -424,39 +477,6 @@ As a rule of thumb, queries that aren’t dominated by I/O and involve multiple 
 
 On the other hand, when you have the need to perform large scans, you could benefit from the best of both worlds: higher performance at lower cost. For instance, imagine we needed to enable our business analysts to interactively discover insights across a vast amount of historical data. 
 
-1. Instead of running our previous query on 3 months of data, let’s perform the analysis on 7-years. Unlike our previous queries, the time range filter starts at January, 1992 instead of October, 1998. This query should run in under 10 seconds after it is executed a few times.
-```sql
-SELECT c.c_name, c.c_mktsegment, t.prettyMonthYear, uv.totalRevenue
-FROM (
-  SELECT customer, visitYearMonth, SUM(adRevenue) as totalRevenue
-  FROM clickstream.uservisits_parquet1
-  WHERE customer <= 3 and visitYearMonth >= 199201
-  GROUP BY  customer, visitYearMonth) as uv
-RIGHT OUTER JOIN customer as c ON c.c_custkey = uv.customer
-INNER JOIN (
-  SELECT DISTINCT d_yearmonthnum, (d_month||','||d_year) as prettyMonthYear 
-  FROM dwdate 
-  WHERE d_yearmonthnum >= 199201) as t
-ON uv.visitYearMonth = t.d_yearmonthnum
-ORDER BY c.c_name, c.c_mktsegment, uv.visitYearMonth ASC;
-```
-
-2. Inspect the SVL_S3QUERY_SUMMARY again by running the query:
-```sql
-select elapsed, s3_scanned_rows, s3_scanned_bytes, 
-  s3query_returned_rows, s3query_returned_bytes, files, avg_request_parallelism 
-from svl_s3query_summary 
-where query = pg_last_query_id() 
-order by query,segment;
-```
-
-You should observe the results below. Note that this query scans nearly 1.9B records, which is half the data set to aggregate data across 7-years. 
-
-|elapsed|s3_scanned_rows|s3_scanned_bytes|s3query_returned_rows|s3query_returned_bytes|files|avg_request_parallelism|
-|---|---|---|---|---|---|---|
-|9005338|1898739653|15217906256|252|2016|252|8.15|
-
-This is a lot of data to process, yet the query runs in under 10 seconds. This is substantially faster that the queries we ran at the start of the lab, which queried the same result set. The difference in performance is a result of the improvements we made to the data format, size and pushing the aggregation work down to the Spectrum layer.
 
 ## Before You Leave
 If you are done using your cluster, please think about decommissioning it to avoid having to pay for unused resources.
