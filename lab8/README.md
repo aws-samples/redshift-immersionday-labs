@@ -43,7 +43,7 @@ Nested data support enables Redshift customers to directly query their nested da
 Name struct<Given: string, Family: string>
 ```
 
-*Array/Map* - this type defines a collection of an arbitrary number of elements of a certain type.  In the following example, the *Phones* field is an array of elements with the *string* type.
+*Array* - this type defines a collection of an arbitrary number of elements of a certain type.  In the following example, the *Phones* field is an array of elements with the *string* type.
 
 ```
 {Phones: ["123-457789"]}
@@ -63,7 +63,7 @@ Create even more complex data types by (deeply) nesting complex data types like 
 {Orders: [ {Date: "2018-03-02 08:02:15", Price: 13.50} ]
 ```
 ```
-Orders array<struct<Date: timestamp, Price: double precision>>
+Orders array<struct<Date: timestamp, Price: double>>
 ```
 
 ## Infer JSON Schema
@@ -122,7 +122,7 @@ Click – *Edit Schema* and review the schema created by the crawler.
 The JSON dataset contains struct, array columns. 
 <table><tr><td><img src=../images/lab8_table2.png></td></tr></table>
 
-Note: The Crawler created a superset of the columns in the table definition. Customer_1.JSON file has c_comments key but customer_2.JSON and customer_3.JSON does not have c_comment column/key.
+Note: The Crawler created a superset of the columns in the table definition. Customer_1.JSON file has the c_comment column but customer_2.JSON and customer_3.JSON does not have the c_comment column.
 
 ## Query JSON data using Redshift Spectrum
 
@@ -162,7 +162,7 @@ WHERE cust.c_nationkey = '-2013'
 
 3. Query the Order struct and check how many orders each customer has:
 ```
-Orders array<
+Order array<
   struct<
     o_orderstatus:String, 
     o_totalprice:Double,
@@ -184,7 +184,7 @@ ORDER BY cust.c_name;
 ```
 <table><tr><td><img src=../images/lab8_query2.png></td></tr></table>
 
-4. Query the Order arrays to flatten or un-nest the Order columns. Notice how the scalar in an array is queried using alias (e.g. co.o_totalprice).  Struct data type is queried using the dot-notation (e.g. cust.c_name).
+4. Query the Orders array to flatten or un-nest the Order details. Notice how the scalar in an array is queried using alias (e.g. co.o_totalprice).  Struct data type is queried using the dot-notation (e.g. cust.c_name).
 
 ```sql
 SELECT cust.c_name,
