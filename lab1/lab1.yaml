@@ -17,11 +17,11 @@ Parameters:
     Description: The number of compute nodes in the cluster. For multi-node clusters,
       the NumberOfNodes parameter must be greater than 1
     Type: Number
-    Default: '2'
+    Default: '4'
   NodeType:
     Description: The type of node to be provisioned
     Type: String
-    Default: ds2.8xlarge
+    Default: dc2.large
     AllowedValues:
     - ds2.xlarge
     - ds2.8xlarge
@@ -33,7 +33,7 @@ Parameters:
     Default: awsuser
     AllowedPattern: "([a-z])([a-z]|[0-9])*"
   MasterUserPassword:
-    Description: The password that is associated with the master user account for the cluster that is being created. Must have a length of 8-64 characters, contain one uppercase letter, one lowercase letter, and one number. Also only contain printable ASCII characters except for '/', '@', '"', ' ', '\' and '\'. Default is Awsuser123
+    Description: The password that is associated with the master user account for the cluster that is being created. Default is Awsuser123. Must have a length of 8-64 characters, contain one uppercase letter, one lowercase letter, and one number. Also only contain printable ASCII characters except for '/', '@', '"', ' ', '\' and '\'.
     Type: String
     Default: Awsuser123
     NoEcho: 'true'
@@ -136,8 +136,8 @@ Resources:
       SecurityGroupIngress:
       - CidrIp:
           Ref: InboundTraffic
-        FromPort: 5439
-        ToPort: 5439
+        FromPort: !Ref PortNumber
+        ToPort: !Ref PortNumber
         IpProtocol: tcp
       VpcId:
         Ref: VPC
