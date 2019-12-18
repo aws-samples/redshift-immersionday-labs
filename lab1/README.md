@@ -81,13 +81,15 @@ Navigate to the **Amazon Redshift Dashboard** and click on the "Create Cluster" 
 https://console.aws.amazon.com/redshiftv2/home?#clusters
 ```
 * Cluster Configuration - Choose the node type and set the number of nodes.  For these labs a dc2.large node type with 4 nodes will be suitable. 
-![](../images/CreateCluster1.png)
+<table><tr><td><img src=../images/CreateCluster1.png></td></tr></table> 
 * Cluster Details - Enter values as appropriate for your organization.  Note the Master user password as you will not be able to retrieve this value later.
-![](../images/CreateCluster2.png)
-* Cluster Permissions - Select the Role which you identified or created earlier to associate to the cluster, and click "Add IAM role"
-![](../images/CreateCluster3.png)
-* Additional Configuration - Disable "Use defaults" and choose the VPC, Subnet Group, and VPC Security group you identified or created earlier.
-![](../images/CreateCluster4.png)  
+<table><tr><td><img src=../images/CreateCluster2.png></td></tr></table> 
+* Cluster Permissions - Select the Role which you identified or created earlier to associate to the cluster, and click **Add IAM role**
+<table><tr><td><img src=../images/CreateCluster3.png></td></tr></table> 
+* Additional Configuration - Disable **Use defaults** and choose the VPC, Subnet Group, and VPC Security group you identified or created earlier.
+<table><tr><td><img src=../images/CreateCluster4.png></td></tr></table> 
+
+Leave the remaining settings with their default values.  Click **Create Cluster** to launch the Redshift cluster.
 
 ## Configure Client Tool
 * See [Prerequisites](#prerequisites) for more details on downloading and installing [SQL Workbench/J](http://www.sql-workbench.net) and the [Redshift JDBC Driver](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-to-cluster.html). 
