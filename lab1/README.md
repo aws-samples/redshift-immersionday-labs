@@ -103,7 +103,7 @@ Leave the remaining settings with their default values.  Click **Create Cluster*
 * Navigate to [File | Connect Window] to create a new connection profile and modify the following settings and once complete click on the "Test Connection" button.
   * Name - "LabConnection"
   * Driver - Amazon Redshift (com.amazon.redshift.jdbc.Driver)
-  * URL - Find this by navigating to the [Cluster List](https://console.aws.amazon.com/redshift/home?cluster-details:#cluster-list:), selecting your cluster, and copying the JDBC URL.  
+  * URL - Find this by navigating to the [Cluster List](https://console.aws.amazon.com/redshiftv2/home?#clusters), selecting your cluster, clicking on **Properties** and copying the JDBC URL.  
   ![](../images/JDBCUrl.png)
   * Username - [Master user name]
   * Password - [Master user password]
