@@ -57,9 +57,9 @@ https://console.aws.amazon.com/vpc/home?#CreateRouteTable:
 ![](../images/EditRoute.png)
 ![](../images/EditSubnet.png)
 ### Subnet Group
-Create a Redshift **Cluster Subnet Group** containing the two subnets you created earlier.
+Create a Redshift **Cluster Subnet Group** containing the two subnets you created earlier by clicking the add all subnets for this VPC button.
 ```
-https://console.aws.amazon.com/redshift/home?#subnet-groups:
+https://console.aws.amazon.com/redshiftv2/home?#subnet-groups
 ```
 ![](../images/SubnetGroup.png)
 ### Security Group
