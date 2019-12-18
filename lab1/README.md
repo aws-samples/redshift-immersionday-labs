@@ -62,6 +62,7 @@ Create a Redshift **Cluster Subnet Group** containing the two subnets you create
 https://console.aws.amazon.com/redshiftv2/home?#subnet-groups
 ```
 <table><tr><td><img src=../images/SubnetGroup.png></td></tr></table> 
+
 ### Security Group
 Create a **Security Group** associated to the VPC you created earlier.  Edit the Security Group to create a rule which allows incoming connections from your IP Address.
 ```
