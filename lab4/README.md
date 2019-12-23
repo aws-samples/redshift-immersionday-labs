@@ -148,11 +148,11 @@ https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/cano
 ````
 ![](../images/canonical_year.png)
 ````
-https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/
+https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/canonical/NY-Pub/year%253D2016/
 ````
 ![](../images/canonical_month.png)
 ````
-https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/type%253Dgreen/
+https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/
 ````
 ![](../images/canonical_type.png)
 
