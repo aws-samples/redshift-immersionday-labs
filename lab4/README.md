@@ -144,15 +144,15 @@ In the next part of this lab, we will perform the following activities:
 **Note the partitioning scheme is Year, Month, Type (where Type is a taxi company). Here's a quick Screenshot:**
 
 ````
-https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-Pub/?region=us-east-1&tab=overview
+https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/canonical/NY-Pub/
 ````
 ![](../images/canonical_year.png)
 ````
-https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/?region=us-east-1&tab=overview
+https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/
 ````
 ![](../images/canonical_month.png)
 ````
-https://s3.console.aws.amazon.com/s3/buckets/serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/type%253Dgreen/?region=us-east-1&tab=overview
+https://s3.console.aws.amazon.com/s3/buckets/us-west-2.serverless-analytics/canonical/NY-Pub/year%253D2016/month%253D1/type%253Dgreen/
 ````
 ![](../images/canonical_type.png)
 
