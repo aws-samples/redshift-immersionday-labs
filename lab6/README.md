@@ -1,4 +1,4 @@
-# Query Aurora PostgreSQL using Federation"
+# Query Aurora PostgreSQL using Federation
 
 ## Contents
 * [Before You Begin](#before-you-begin)
