@@ -10,7 +10,7 @@
 * [Before You Leave](#before-you-leave)
 
 ## Before You Begin
-This lab assumes you have launched a Redshift cluster and have loaded it with sample TPC benchmark data. If you have not completed these steps, see [Lab 2. Data Loading](../lab2.html).
+This lab assumes you have launched a Redshift cluster and have loaded it with sample TPC benchmark data. If you have not completed these steps, see [Lab 2. Data Loading](../lab2/README.md).
 
 Note: As of 3/1/2020, the federation feature in Redshift is in Public Preview only.  To enable your cluster for this feature, restore the latest snapshot of your cluster and select **Preview --> preview_features** for the *Maintenance Track* option.
 
